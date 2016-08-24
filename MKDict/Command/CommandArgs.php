@@ -6,12 +6,12 @@ class CommandArgs extends \ArrayObject
 {
     protected $command_args;
     
-    public function __construct($command_args)
+    public function __construct($argv)
     {
         $this->command_args = array();
         parent::__construct($this->command_args);
         
-        foreach($command_args as $arg)
+        foreach($argv as $arg)
         {
             if(preg_match("/--sample-gz-file=(.*)\.gz/ixsm", $arg))
             {

@@ -5,14 +5,8 @@ define('MANAKYUN', true);
 require_once __DIR__ . '/config.php';
 require_once __DIR__ . '/autoload.php';
 
-use MKDict\Command\CommandArgs;
-$options = new CommandArgs($argv);
-
-use MKDict\Logger\InstallLogger;
-$logger = new InstallLogger();
-
-use MKDict\Installer\Installer;
-$installer = new Installer($options);
+$installer = new MKDict\Installer\Installer($argv);
+unset($argv);
 $installer->install();
 
 echo "success\n";

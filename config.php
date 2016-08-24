@@ -3,6 +3,19 @@
 define("INTEGER_ARRAY_MAX_SIZE", PHP_INT_SIZE == 8 ? 1000 : 2000); //8kB
 define('USORT_EQUALITY_CONSTANT', PHP_MAJOR_VERSION >= 7 ? 0 : 1);
 
+function main_exception_handler(Throwable $e)
+{
+    if(is_a($e, "MKDict\\Exception\\FatalException"))
+    {
+        echo $e->get_message()."\n";
+    }
+    else
+    {
+        throw $e;
+    }
+}
+set_exception_handler("main_exception_handler");
+
 $config = array(
     'db_host' => 'localhost',
     'db_name' => 'manakyun',
@@ -55,4 +68,32 @@ $config = array_merge($config, array(
 
 $config = array_merge($config, array(
     'filesize_checkpoint' => floor(0.1 * $config['JMDict_max_file_size'] / $config['HTTP_stream_chunk_size']),
+));
+
+$config = array_merge($config, array(
+    'data_dir' => __DIR__ . '/var/data',
+    'tmp_dir' => __DIR__ . '/var/tmp',
+    'log_dir' => __DIR__ . '/var/logs',
+));
+
+//Unicode 7.0
+$config = array_merge($config, array(
+    'unicode_files' => array(
+        'CaseFolding' => array(
+            'name' => 'CaseFolding.txt',
+            'url' => 'http://www.unicode.org/Public/7.0.0/ucd/CaseFolding.txt'
+        ),
+        'DerivedNormalizationProps' => array(
+            'name' => 'DerivedNormalizationProps.txt',
+            'url' => 'http://www.unicode.org/Public/7.0.0/ucd/DerivedNormalizationProps.txt'
+        ),
+        'HangulSyllableType' => array(
+            'name' => 'HangulSyllableType.txt',
+            'url' => 'http://www.unicode.org/Public/7.0.0/ucd/HangulSyllableType.txt'
+        ),
+        'UnicodeData' => array(
+            'name' => 'UnicodeData.txt',
+            'url' => 'http://www.unicode.org/Public/7.0.0/ucd/UnicodeData.txt'
+        ),
+    )
 ));
