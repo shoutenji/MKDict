@@ -24,7 +24,8 @@ class PlainTextFileResource implements FileResource, Downloadable
         
         do
         {
-            $this->write($file->read($config['HTTP_stream_chunk_size']));
+            $bytes = $file->read($config['HTTP_stream_chunk_size']);
+            $this->write();
         }
         while(!$file->feof());
     }
@@ -53,32 +54,26 @@ class PlainTextFileResource implements FileResource, Downloadable
     
     public function open()
     {
-        if($this->file_info->has_stream_context())
-        {
-            $fhandle = fopen($this->file_info->get_path_name(), $this->file_info->mode, $this->file_info->use_include, $this->file_info->get_stream_context());
-        }
-        else
-        {
-            $fhandle = fopen($this->file_info->get_path_name(), $this->file_info->mode, $this->file_info->use_include);
-        }
-        
-        if(false !== $fhandle)
-        {
-            $this->file_handle = $fhandle;
-        }
-        else
-        {
-            throw new FileResourceNotAvailableException(debug_backtrace(), $this->file_info);
-        }
+        $this->file_handle = $this->file_info->get_handle();
     }
     
     public function feof()
     {
+        if(empty($this->file_handle))
+        {
+            return true;
+        }
+        
         return \feof($this->file_handle);
     }
     
     public function close()
     {
+        if(empty($this->file_handle))
+        {
+            return true;
+        }
         
+        return \fclose($this->file_handle);
     }
 }

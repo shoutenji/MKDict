@@ -54,11 +54,11 @@ $config = array_merge($config, array(
 ));
 
 $config = array_merge($config, array(
-   'EDRDG_domain' => 'http://ftp.monash.edu.au',
-   'EDRDG_path' => '/pub/nihongo',
-   'JMDict_filename' => '/JMdict_e.gz',
-   'HTTP_stream_chunk_size' => 4096,
-   'JMDict_max_file_size' => 100e6, //100mb limit on the (compressed) dictionary file size
+    'EDRDG_domain' => 'http://ftp.monash.edu.au',
+    'EDRDG_path' => '/pub/nihongo',
+    'JMDict_filename' => '/JMdict_e.gz',
+    'HTTP_stream_chunk_size' => 4096,
+    'max_file_size_in_ram' => 100e6, //100mb limit on the (compressed) dictionary file size
     'GZ_buffer_rw_size' => 2048,
     'DTD_max_strlen' => pow(2,16),
     'parser_stream_read_size' => 4096,
@@ -66,9 +66,11 @@ $config = array_merge($config, array(
     'element_buffer_size' => 2048,
 ));
 
+/*
 $config = array_merge($config, array(
     'filesize_checkpoint' => floor(0.1 * $config['JMDict_max_file_size'] / $config['HTTP_stream_chunk_size']),
 ));
+*/
 
 $config = array_merge($config, array(
     'data_dir' => __DIR__ . '/var/data',
@@ -78,7 +80,7 @@ $config = array_merge($config, array(
 
 //Unicode 7.0
 $config = array_merge($config, array(
-    'unicode_files' => array(
+    'unicode_data_files' => array(
         'CaseFolding' => array(
             'name' => 'CaseFolding.txt',
             'url' => 'http://www.unicode.org/Public/7.0.0/ucd/CaseFolding.txt'
