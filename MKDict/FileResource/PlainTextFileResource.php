@@ -7,6 +7,7 @@ use MKDict\FileResource\Downloadable;
 use MKDict\FileResource\Exception\FileResourceNotAvailableException;
 use MKDict\FileResource\Exception\FReadFailureException;
 use MKDict\FileResource\Exception\FWriteFailureException;
+use MKDict\FileResource\Exception\FileTooLargeException;
 
 class PlainTextFileResource implements FileResource, Downloadable
 {
@@ -25,6 +26,10 @@ class PlainTextFileResource implements FileResource, Downloadable
         do
         {
             $bytes = $file->read($config['HTTP_stream_chunk_size']);
+            if(@filesize($this->file_info->get_path_name()) + strlen($bytes) > $config['max_file_size'])
+            {
+                throw new FileTooLargeException(debug_backtrace(), $this->file_info);
+            }
             $this->write();
         }
         while(!$file->feof());

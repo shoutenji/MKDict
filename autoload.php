@@ -21,6 +21,11 @@ function my_autoload($class)
         $class_path .= "/$name";
     }
     
+    if(!@file_exists("$class_path/$class_name.php"))
+    {
+        die("File does not exist: $class_path/$class_name.php\n".print_r(debug_backtrace(),true));
+    }
+    
     require_once "$class_path/$class_name.php";
 }
 

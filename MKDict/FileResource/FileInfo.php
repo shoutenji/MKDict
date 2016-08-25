@@ -116,6 +116,24 @@ class FileInfo
         }
     }
     
+    public function get_option(int $option, $default_value)
+    {
+        switch($option)
+        {
+            case self::OPTION_IGNORE_BLANK_LINES:
+                return (bool) ($this->ignore_blank_lines ?? $default_value);
+                
+            case self::OPTION_COMMENT_CHAR:
+                return (string) ($this->comment_char ?? $value);
+            
+            case self::OPTION_VALUE_DELIMITER:
+                return (string) ($this->value_delimiter ?? $value);
+                
+            default:
+                return;
+        }
+    }
+    
     public function is_local()
     {
         $path_name = $this->get_path_name();
@@ -129,38 +147,42 @@ class FileInfo
         global $config;
         
         $path_name = $this->get_path_name();
+        $exists = @file_exists($path_name);
+        
+        if(empty($this->mode))
+        {
+            throw new BadFileInfoException(debug_backtrace(), $this, "A FileInfo object must a mode specified.");
+        }
         
         //if this is a local file, we should check if the file exists and ensure it has a reasonable size. file_exists() returns false for urls
         if($this->is_local())
         {
-            if(!@file_exists($path_name))
+            if(in_array($this->mode, array("r","r+")) && !$exists)
             {
                 throw new FileDoesNotExistException(debug_backtrace(), $this);
-            }
-            
-            if(false === $size = @filesize($path_name))
-            {
-                throw new FileIOFailureException(debug_backtrace(), $this);
-            }
-            else
-            {
-                if($size > $config['max_file_size_in_ram'])
-                {
-                    throw new FileTooLargeException(debug_backtrace(), $this);
-                }
-            }
-            
-            if(empty($this->mode))
-            {
-                throw new BadFileInfoException(debug_backtrace(), $this, "A FileInfo object must a mode specified.");
             }
             
             switch($this->mode)
             {
                 case 'r':
+                    if(!$exists)
+                    {
+                        throw new FileDoesNotExistException(debug_backtrace(), $this);
+                    }
                     if(!@is_readable($path_name))
                     {
                         throw new FileNotReadableException(debug_backtrace(), $this);
+                    }
+                    if(false === $size = @filesize($path_name))
+                    {
+                        throw new FileIOFailureException(debug_backtrace(), $this);
+                    }
+                    else
+                    {
+                        if($size > $config['max_file_size_in_ram'])
+                        {
+                            throw new FileTooLargeException(debug_backtrace(), $this);
+                        }
                     }
                     break;
                     
@@ -168,25 +190,40 @@ class FileInfo
                 case 'a':
                 case 'x':
                 case 'c':
-                    if(!is_writeable($path_name))
+                    if($exists && !@is_writeable($path_name))
                     {
                         throw new FileNotWriteableException(debug_backtrace(), $this);
                     }
                     break;
                     
                 case 'r+':
+                    if(!$exists)
+                    {
+                        throw new FileDoesNotExistException(debug_backtrace(), $this);
+                    }
                 case 'w+':
                 case 'a+':
                 case 'x+':
                 case 'c+':
-                    if(!@is_readable($path_name))
+                    if($exists && !@is_readable($path_name))
                     {
                         throw new FileNotReadableException(debug_backtrace(), $this);
                     }
                     
-                    if(!is_writeable($path_name))
+                    if($exists && !@is_writeable($path_name))
                     {
                         throw new FileNotWriteableException(debug_backtrace(), $this);
+                    }
+                    if(false === $size = @filesize($path_name))
+                    {
+                        throw new FileIOFailureException(debug_backtrace(), $this);
+                    }
+                    else
+                    {
+                        if($size > $config['max_file_size_in_ram'])
+                        {
+                            throw new FileTooLargeException(debug_backtrace(), $this);
+                        }
                     }
                     break;
                 
@@ -197,11 +234,11 @@ class FileInfo
         
         if($this->has_stream_context())
         {
-            $handle = fopen($path_name, $this->mode, $this->use_include, $this->get_stream_context());
+            $handle = @fopen($path_name, $this->mode, $this->use_include, $this->get_stream_context());
         }
         else
         {
-            $handle = fopen($path_name, $this->mode, $this->use_include);
+            $handle = @fopen($path_name, $this->mode, $this->use_include);
         }
         
         if(false === $handle)
