@@ -179,7 +179,7 @@ class FileInfo
                     }
                     else
                     {
-                        if($size > $config['max_file_size_in_ram'])
+                        if($size > $config['max_file_size'])
                         {
                             throw new FileTooLargeException(debug_backtrace(), $this);
                         }
@@ -220,7 +220,7 @@ class FileInfo
                     }
                     else
                     {
-                        if($size > $config['max_file_size_in_ram'])
+                        if($size > $config['max_file_size'])
                         {
                             throw new FileTooLargeException(debug_backtrace(), $this);
                         }

@@ -5,7 +5,8 @@ define('MANAKYUN', true);
 require_once __DIR__ . '/config.php';
 require_once __DIR__ . '/autoload.php';
 
-$options = new CommandArgs($argv);
+$options = new MKDict\Command\CommandArgs($argv);
+unset($argv);
 
-//$importer = new Importer($options);
-//$importer->import();
+$installer = new MKDict\Importer\Importer();
+$installer->import();

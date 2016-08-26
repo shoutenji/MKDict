@@ -25,7 +25,13 @@ $config = array(
 );
 
 $config = array_merge($config, array(
+    'dsn' => "mysql:dbname=$config[db_name];host=$config[db_host]",
+));
+
+$config = array_merge($config, array(
     'table_test' => $config['db_table_prefix'].'test',
+    'table_meta' => $config['db_table_prefix'].'meta',
+    'table_dict_info' => $config['db_table_prefix'].'dict_info',
     'table_entries' => $config['db_table_prefix'].'entries',
     'table_ants_raw' => $config['db_table_prefix'].'ants_raw',
     'table_xrefs_raw' => $config['db_table_prefix'].'xrefs_raw',
@@ -44,7 +50,7 @@ $config = array_merge($config, array(
     'table_poses' => $config['db_table_prefix'].'poses',
     'table_fields' => $config['db_table_prefix'].'fields',
     'table_miscs' => $config['db_table_prefix'].'miscs',
-    'table_s_infos' => $config['db_table_prefix'].'s_infos',
+    'table_sense_infos' => $config['db_table_prefix'].'s_infos',
     'table_dials' => $config['db_table_prefix'].'dials',
     'table_lsources' => $config['db_table_prefix'].'lsources',
     'table_stagrs' => $config['db_table_prefix'].'stagrs',
@@ -97,5 +103,12 @@ $config = array_merge($config, array(
             'name' => 'UnicodeData.txt',
             'url' => 'http://www.unicode.org/Public/7.0.0/ucd/UnicodeData.txt'
         ),
-    )
+    ),
+    'case_mapping_f' => 'case_mapping_f.php',
+    'nfc_qc' => 'nfc_qc.php',
+    'nfkc_qc' => 'nfkc_qc.php',
+    'primary_composites' => 'primary_composites.php',
+    'ccc_class_map' => 'ccc_class_map.php',
+    'canonical_decompositions' => 'canonical_decompositions.php',
+    'compatibility_decompositions' => 'compatibility_decompositions.php',
 ));

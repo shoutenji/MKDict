@@ -431,17 +431,16 @@ class Unicode
      *
      * @return string The decomposed string
      */
-    /*
-    function utf8_decompose($text, $type = UNICODE_DECOMPOSITION_CANONICAL)
+    public static function utf8_decompose($text, $type = self::UNICODE_DECOMPOSITION_CANONICAL)
     {
-        global $mk_exceptions;
+        global $config;
         
-        require_once GENERATED_FILE_CANONICAL_DECOMP;
-        require_once GENERATED_FILE_COMPATABILITY_DECOMP;
-        require_once GENERATED_FILE_CCC;
+        require_once "$config[data_dir]/$config[canonical_decompositions]";
+        require_once "$config[data_dir]/$config[compatibility_decompositions]";
+        require_once "$config[data_dir]/$config[ccc_class_map]";
         
         $decomp_map1 = &$GLOBALS['canon_decomp'];
-        if($type === UNICODE_DECOMPOSITION_COMPATIBILITY)
+        if($type === self::UNICODE_DECOMPOSITION_COMPATIBILITY)
         {
             $decomp_map2 = &$GLOBALS['compat_decomp'];
             $decomp_map = array_merge($decomp_map1, $decomp_map2);
@@ -457,18 +456,18 @@ class Unicode
         $pos = 0;
         while(($char = mb_substr($text, $pos, 1)) !== "")
         {
-            $cp = utf8_utf($char);
-            if($cp > UNICODE_HANGUL_SYLLABLE_FIRST && $cp < UNICODE_HANGUL_SYLLABLE_LAST)
+            $cp = self::utf8_utf($char);
+            if($cp > self::UNICODE_HANGUL_SYLLABLE_FIRST && $cp < self::UNICODE_HANGUL_SYLLABLE_LAST)
             {
-                $hangul_decomp = decompose_hangul($cp);
-                $text = mb_substr_replace($text, $hangul_decomp, $pos);
+                $hangul_decomp = self::decompose_hangul($cp);
+                $text = self::mb_substr_replace($text, $hangul_decomp, $pos);
                 $pos += mb_strlen($hangul_decomp);
             }
             else
             {
                 if(isset($decomp_map[$char]))
                 {
-                    $text = mb_substr_replace($text, $decomp_map[$char], $pos);
+                    $text = self::mb_substr_replace($text, $decomp_map[$char], $pos);
                 }
                 else
                 {
@@ -490,7 +489,7 @@ class Unicode
                     usort($char_buffer, function($char1, $char2) use ($ccc_map){
                         return $ccc_map[$char1] === $ccc_map[$char2] ?  USORT_EQUALITY_CONSTANT : ( $ccc_map[$char1] < $ccc_map[$char2] ? -1 : 1);
                     });
-                    $text = mb_substr_replace($text, implode($char_buffer), $insert_position, count($char_buffer) - 1);
+                    $text = self::mb_substr_replace($text, implode($char_buffer), $insert_position, count($char_buffer) - 1);
                     $char_buffer = array();
                 }
             }
@@ -498,7 +497,7 @@ class Unicode
             {
                 if($i == 0)
                 {
-                    $mk_exceptions->invalid_utf8("Defective combining character sequence found");
+                    //$mk_exceptions->invalid_utf8("Defective combining character sequence found");
                 }
                 else
                 {
@@ -512,15 +511,301 @@ class Unicode
                             usort($char_buffer, function($char1, $char2) use ($ccc_map){
                                 return $ccc_map[$char1] === $ccc_map[$char2] ?  USORT_EQUALITY_CONSTANT : ( $ccc_map[$char1] < $ccc_map[$char2] ? -1 : 1);
                             });
-                            $text = mb_substr_replace($text, implode($char_buffer), $insert_position, count($char_buffer) - 1);
+                            $text = self::mb_substr_replace($text, implode($char_buffer), $insert_position, count($char_buffer) - 1);
                             $char_buffer = array();
                         }
                     }
                 }
             }
         }
-
         return $text;
     }
-    */
+    
+    /**
+     * Unicode's Recomposition algorithm
+     *
+     * See http://www.unicode.org/versions/Unicode7.0.0/ch03.pdf section 3.11 Normalization form
+     * 
+     * @param string $text The valid UTF-8 string to recompose
+     * @param string $type The decomposition type that was used prior. Either UNICODE_DECOMPOSITION_CANONICAL or UNICODE_DECOMPOSITION_COMPATIBILITY
+     *
+     * @return string The recomposed string
+     * 
+     * @TODO test hangul recomposition
+     */
+    public static function utf8_recompose($text, $type = self::UNICODE_DECOMPOSITION_CANONICAL)
+    {
+        global $config;
+        
+        require_once "$config[data_dir]/$config[nfc_qc]";
+        require_once "$config[data_dir]/$config[nfkc_qc]";
+        require_once "$config[data_dir]/$config[ccc_class_map]";
+        require_once "$config[data_dir]/$config[primary_composites]";
+        
+        if($type === self::UNICODE_DECOMPOSITION_CANONICAL)
+        {
+            $qc_map = &$GLOBALS['nfc_qc'];
+        }
+        else if($type === self::UNICODE_DECOMPOSITION_COMPATIBILITY)
+        {
+            $qc_map = &$GLOBALS['nfkc_qc'];
+        }
+        $ccc_map = &$GLOBALS['ccc_class'];
+        $primary_composites = &$GLOBALS['primary_composites'];
+        
+        $pos = 1;
+        while(($char = mb_substr($text, $pos, 1)) !== "")
+        {
+            $replaced  = false;
+            if(in_array($char, $qc_map))
+            {
+                $pos_ = $pos - 1;
+                while($pos_ >= 0)
+                {
+                    $char_ = mb_substr($text, $pos_, 1);
+                    if(!isset($ccc_class[$char_]))
+                    {
+                        //if $char_ is blocked from $char, we have to continue on
+                        if($pos - $pos_ == 1)
+                        {
+                            $preceeding_char = mb_substr($text, $pos-1, 1);
+                            if(isset($ccc_class[$preceeding_char]) && isset($ccc_class[$char]) && $ccc_class[$preceeding_char] >= $ccc_class[$char])
+                            {
+                                $pos++;
+                                break;
+                            }
+                        }
+                        $candidate_char = $char_ . $char;
+                        if(isset($primary_composites[$candidate_char]))
+                        {
+                            $text = self::mb_substr_replace($text, $primary_composites[$candidate_char], $pos_);
+                            $text = self::mb_substr_replace($text, "", $pos);
+                            $replaced = true;
+                            break;
+                        }
+                    }
+                    $pos_--;
+                }
+                if(!$replaced)
+                {
+                    $pos++;
+                }
+                continue;
+            }
+            else
+            {
+                $pos++;
+                continue;
+            }
+        }
+        
+        return $text;
+    }
+    
+    /**
+     * Default Caseless Matching. A lowercase operation generalized to UTF8 characters.
+     *
+     * The casefolding is accomplished with a pre-generated case map. See http://www.unicode.org/versions/Unicode7.0.0/ch03.pdf section 3.13 Default Case Algorithms.
+     * Note this casefolding does not preserve normalized text.
+     * 
+     * @param string $text The valid UTF-8 string to casefold
+     *
+     * @return string The case-folded string
+     */
+    public static function casefold($text)
+    {
+        require_once "$config[data_dir]/$config[case_mapping_f]";
+        
+        return strtr($text, $GLOBALS['case_map']);
+    }
+    
+    /**
+     * Canonical Caseless Matching. A lowercase operation generalized to UTF8 characters that also preserves normalized text.
+     *
+     * The casefolding is accomplished with a pre-generated case map. See http://www.unicode.org/versions/Unicode7.0.0/ch03.pdf section 3.13 Default Case Algorithms.
+     * Similar to casefold($text) but will additionaly equate sequences which differ only in their normal forms. Note this function does return decomposed text, do not
+     * use for UI strings.
+     * 
+     * @see casefold($text)
+     * 
+     * @param string $text The valid UTF-8 string to casefold
+     *
+     * @return string The case-folded string
+     */
+    public static function nfd_casefold($text)
+    {
+        return self::nfd(self::casefold(nfd($text)));
+    }
+    
+    /**
+     * Compatibility Caseless Matching. A lowercase operation generalized to UTF8 characters that also preserves normalized text and collapses compatibility differences.
+     *
+     * The casefolding is accomplished with a pre-generated case map. See http://www.unicode.org/versions/Unicode7.0.0/ch03.pdf section 3.13 Default Case Algorithms.
+     * Note this casefolding doesn't not preserve normalized text. Similar to casefold($text) but preserves normalization.
+     * 
+     * @see casefold($text)
+     * @see nfd_casefold($text)
+     * 
+     * @param string $text The valid UTF-8 string to casefold
+     *
+     * @return string The case-folded string
+     */
+    public static function nfkd_casefold($text)
+    {
+        return self::nfkd(self::casefold(self::nfkd(self::casefold(self::nfd($text)))));
+    }
+    
+    /**
+     * Unicode Normalization Form D: Canonical Decomposition
+     *
+     * See Unicode Standard Annex #15 Normalization Forms http://www.unicode.org/reports/tr15/tr15-41.html
+     * 
+     * @see nfkd($text)
+     * @see nfc($text)
+     * @see nfkc($text)
+     * @see normalize_text($text, $mode, $entity)
+     * 
+     * @param string $text The valid UTF-8 string to decompose
+     *
+     * @return string The decomposed string
+     */
+    private static function nfd($text)
+    {
+        return self::utf8_decompose($text);
+    }
+    
+    /**
+     * Unicode Normalization Form KD: Compatibility Decomposition
+     *
+     * See Unicode Standard Annex #15 Normalization Forms http://www.unicode.org/reports/tr15/tr15-41.html
+     * 
+     * @see nfd($text)
+     * @see nfc($text)
+     * @see nfkc($text)
+     * @see normalize_text($text, $mode, $entity)
+     * 
+     * @param string $text The valid UTF-8 string to decompose
+     *
+     * @return string The decomposed string
+     */
+    private static function nfkd($text)
+    {
+        return self::utf8_decompose($text, self::UNICODE_DECOMPOSITION_COMPATIBILITY);
+    }
+    
+    /**
+     * Unicode Normalization Form C: Canonical Decomposition followed by Canonical Composition
+     *
+     * See Unicode Standard Annex #15 Normalization Forms http://www.unicode.org/reports/tr15/tr15-41.html
+     * 
+     * @see nfd($text)
+     * @see nfkd($text)
+     * @see nfkc($text)
+     * @see normalize_text($text, $mode, $entity)
+     * 
+     * @param string $text The valid UTF-8 string to decompose
+     *
+     * @return string The composed string
+     */
+    private static function nfc($text)
+    {
+        return self::utf8_recompose(self::utf8_decompose($text));
+    }
+    
+    /**
+     * Unicode Normalization Form KC: Compatibility Decomposition followed by Canonical Composition
+     *
+     * See Unicode Standard Annex #15 Normalization Forms http://www.unicode.org/reports/tr15/tr15-41.html
+     * 
+     * @see nfd($text)
+     * @see nfkd($text)
+     * @see nfc($text)
+     * @see normalize_text($text, $mode, $entity)
+     * 
+     * @param string $text The valid UTF-8 string to decompose
+     *
+     * @return string The composed string
+     */
+    private static function nfkc($text)
+    {
+        return self::utf8_recompose(utf8_decompose($text, self::UNICODE_DECOMPOSITION_COMPATIBILITY), self::UNICODE_DECOMPOSITION_COMPATIBILITY);
+    }
+    
+    /**
+     * Markup-aware text normalization. Normalizes text but avoids text between markup.
+     *
+     * Specify a markup token and this function will normalize all text except any text that is encapsulated by successive markup tokens. If no markup token is
+     * specified, then all text is normalized.
+     * 
+     * @param string $text The valid UTF-8 string to decompose
+     * @param string $mode Which Unicode normal form to use
+     * @param string $entity The markup delimiter
+     *
+     * @return string The composed string
+     */
+    public static function normalize_text($text, $mode, $entity = "")
+    {
+        switch($mode)
+        {
+            case self::UTF_NORMALIZE_NFD:
+                $func = "nfd";
+                break;
+            
+            case self::UTF_NORMALIZE_NFKD:
+                $func = "nfkd";
+                break;
+            
+            case self::UTF_NORMALIZE_NFC:
+                $func = "nfc";
+                break;
+            
+            case self::UTF_NORMALIZE_NFKC:
+                $func = "nfkc";
+                break;
+            
+            case self::UTF_NORMALIZE_NFD_CASEFOLD:
+                $func = "nfd_casefold";
+                break;
+            
+            case self::UTF_NORMALIZE_NFKD_CASEFOLD:
+                $func = "nfkd_casefold";
+                break;
+            
+            default:
+                return false;
+        }
+
+        if(!empty($entity))
+        {
+            $tokens = preg_split("/ " . $entity . " /ixsm", $text, -1, PREG_SPLIT_NO_EMPTY);
+            $entity_token = false;
+            //looping through all the consecutive tokens created by preg_split we need to keep track of when we enter and exit
+            //a markup delimited substring
+            foreach($tokens as &$token)
+            {
+                //entering a markup zone
+                if(!$entity_token && $token === $entity)
+                {
+                    $entity_token = true;
+                }
+                //exiting a markup zone
+                else if($entity_token && $token === $entity)
+                {
+                    $entity_token = false;
+                }
+                //inside a markup zone
+                else if($entity_token) {}
+                //outside a markup zone
+                else
+                {
+                    $token = self::$func($token);
+                }
+            }
+            unset($token);
+            $result = trim(implode($tokens));
+            return $result;
+        }
+        
+        return trim($func($text));
+    }
 }

@@ -4,45 +4,250 @@ namespace MKDict\Installer;
 
 use MKDict\Command\CommandArgs;
 use MKDict\Logger\InstallLogger;
-use MKDict\Database\DB;
 use MKDict\FileResource\FileInfo;
 use MKDict\FileResource\Url;
 use MKDict\FileResource\PlainTextFileResource;
 use MKDict\FileResource\CSVFileResource;
 use MKDict\FileResource\PHPFileResource;
 use MKDict\Unicode\Unicode;
+use MKDict\Unicode\UnicodeTest;
+use MKDict\Database\DBConnection;
+use MKDict\Database\DBTableCreator;
+use MKDict\Database\Exception\DBError;
 
 class Installer
 {
-    protected $options;
     protected $logger;
-    protected $db;
+    protected $db_conn;
     
-    public function __construct($argv)
+    public function __construct()
     {
-        $this->options = new CommandArgs($argv);
+        global $config;
+        
         $this->logger = new InstallLogger();
-        $this->db = new DB();
+        $this->db_conn = new DBConnection($config['dsn'], $config['db_user'], $config['db_pass']);
     }
     
     public function install()
     {
-        if($this->options['generate_utf_data'])
+        global $options;
+        
+        if($options['generate_utf_data'])
         {
             //$this->download_unicode_data_files();
-            $this->generate_utf8_data_files();
+            //$this->generate_utf8_data_files();
         }
         
-        if($this->options['utf_tests'])
+        if($options['utf_tests'])
         {
-            $this->test_utf8_data_files();
+            //$this->test_utf8_data_files();
+        }
+        
+        if($options['test_db'])
+        {
+            //$this->test_db();
+        }
+        
+        if($options['create_db'])
+        {
+            $this->create_db();
         }
     }
     
+    protected function create_db()
+    {
+        global $config;
+        
+        $meta_table = new DBTableCreator($this->db_conn, $config['table_meta']);;
+        $meta_table->add_column("key_value", "VARCHAR(512)", "DEFAULT ''", "NULL");
+        $meta_table->add_column("value", "VARCHAR(512)", "DEFAULT ''", "NULL");
+        $meta_table->create();
+
+        $this->db_conn->exec("INSERT INTO ".$config['table_meta']." VALUES ('uid_counter', '0');");
+
+        $dictionary_meta_table = new DBTableCreator($this->db_conn, $config['table_dict_info']);
+        $dictionary_meta_table->add_column("download_date", "TIMESTAMP", "", "NOT NULL");
+        $dictionary_meta_table->add_column("xml_dec", "VARCHAR(255)", "DEFAULT ''", "NOT NULL");
+        $dictionary_meta_table->add_column("dtd_raw", "TEXT", "", "NULL");
+        $dictionary_meta_table->add_column("dtd_canonical", "TEXT", "", "NULL");
+        $dictionary_meta_table->add_column("dtd_version", "TINYINT UNSIGNED", "DEFAULT 0", "NOT NULL");
+        $dictionary_meta_table->add_column("dictionary_version", "SMALLINT UNSIGNED", "DEFAULT 0", "NOT NULL");
+        $dictionary_meta_table->add_column("version_id", "SMALLINT UNSIGNED", "", "NOT NULL", "AUTO_INCREMENT", "PRIMARY KEY");
+        $dictionary_meta_table->create();
+
+        $entries_table = new DBTableCreator($this->db_conn, $config['table_entries']);
+        $entries_table->add_column("entry_uid", "BIGINT UNSIGNED", "DEFAULT 0", "NOT NULL", "PRIMARY KEY");
+        $entries_table->add_column("sequence_id", "BIGINT UNSIGNED", "DEFAULT 0", "NOT NULL");
+        $entries_table->add_column("version_added_id", "SMALLINT UNSIGNED", "DEFAULT 0", "NOT NULL");
+        $entries_table->add_column("version_removed_id", "SMALLINT UNSIGNED", "DEFAULT NULL", "NULL");
+        $entries_table->add_key("UNIQUE KEY", "sequence_id");
+        $entries_table->create();
+
+        $kanji_pris_table = new DBTableCreator($this->db_conn, $config['table_kanjis_pris']);
+        $kanji_pris_table->add_column("kanji_uid", "BIGINT UNSIGNED", "DEFAULT 0", "NOT NULL");
+        $kanji_pris_table->add_column("binary_raw", "VARCHAR(256)", "DEFAULT ''", "NOT NULL");
+        $kanji_pris_table->create();
+
+        $reading_pris_table = new DBTableCreator($this->db_conn, $config['table_reading_pris']);
+        $reading_pris_table->add_column("reading_uid", "BIGINT UNSIGNED", "DEFAULT 0", "NOT NULL");
+        $reading_pris_table->add_column("binary_raw", "VARCHAR(256)", "DEFAULT ''", "NOT NULL");
+        $reading_pris_table->create();
+
+        $reading_infos_table = new DBTableCreator($this->db_conn, $config['table_reading_infos']);
+        $reading_infos_table->add_column("reading_uid", "BIGINT UNSIGNED", "DEFAULT 0", "NOT NULL");
+        $reading_infos_table->add_column("binary_raw", "VARCHAR(512)", "DEFAULT ''", "NOT NULL");
+        $reading_infos_table->create();
+
+        $kanji_infos_table = new DBTableCreator($this->db_conn, $config['table_kanjis_infos']);
+        $kanji_infos_table->add_column("kanji_uid", "BIGINT UNSIGNED", "DEFAULT 0", "NOT NULL");
+        $kanji_infos_table->add_column("binary_raw", "VARCHAR(512)", "DEFAULT ''", "NOT NULL");
+        $kanji_infos_table->create();
+
+        $kanjis_table = new DBTableCreator($this->db_conn, $config['table_kanjis']);
+        $kanjis_table->add_column("kanji_uid", "BIGINT UNSIGNED", "DEFAULT 0", "NOT NULL", "PRIMARY KEY");
+        $kanjis_table->add_column("entry_uid", "BIGINT UNSIGNED", "DEFAULT 0", "NOT NULL");
+        $kanjis_table->add_column("version_added_id", "SMALLINT UNSIGNED", "DEFAULT 0", "NOT NULL");
+        $kanjis_table->add_column("version_removed_id", "SMALLINT UNSIGNED", "DEFAULT NULL", "NULL");
+        $kanjis_table->add_column("binary_raw", "VARCHAR(512)", "DEFAULT ''", "NOT NULL");
+        $kanjis_table->add_column("binary_nfd", "VARCHAR(512)", "DEFAULT NULL", "NULL");
+        $kanjis_table->add_column("binary_nfkd", "VARCHAR(512)", "DEFAULT NULL", "NULL");
+        $kanjis_table->add_column("binary_nfc", "VARCHAR(512)", "DEFAULT NULL", "NULL");
+        $kanjis_table->add_column("binary_nfkc", "VARCHAR(512)", "DEFAULT NULL", " NULL");
+        $kanjis_table->add_column("binary_nfd_casefold", "VARCHAR(512)", "DEFAULT NULL", "NULL");
+        $kanjis_table->add_column("binary_nfkd_casefold", "VARCHAR(512)", "DEFAULT NULL", "NULL");
+        $kanjis_table->create();
+
+        $readings_table = new DBTableCreator($this->db_conn, $config['table_readings']);
+        $readings_table->add_column("reading_uid", "BIGINT UNSIGNED", "DEFAULT 0", "NOT NULL", "PRIMARY KEY");
+        $readings_table->add_column("entry_uid", "BIGINT UNSIGNED", "DEFAULT 0", "NOT NULL");
+        $readings_table->add_column("version_added_id", "SMALLINT UNSIGNED", "DEFAULT 0", "NOT NULL");
+        $readings_table->add_column("version_removed_id", "SMALLINT UNSIGNED", "DEFAULT NULL", "NULL");
+        $readings_table->add_column("binary_raw", "VARCHAR(512)", "DEFAULT ''", "NOT NULL");
+        $readings_table->add_column("binary_nfd", "VARCHAR(512)", "DEFAULT NULL", "NULL");
+        $readings_table->add_column("binary_nfkd", "VARCHAR(512)", "DEFAULT NULL", "NULL");
+        $readings_table->add_column("binary_nfc", "VARCHAR(512)", "DEFAULT NULL", "NULL");
+        $readings_table->add_column("binary_nfkc", "VARCHAR(512)", "DEFAULT NULL", " NULL");
+        $readings_table->add_column("binary_nfd_casefold", "VARCHAR(512)", "DEFAULT NULL", "NULL");
+        $readings_table->add_column("binary_nfkd_casefold", "VARCHAR(512)", "DEFAULT NULL", "NULL");
+        $readings_table->add_column("nokanji", "BOOLEAN", "DEFAULT 0", "NOT NULL");
+        $readings_table->create();
+
+        $restrs_table = new DBTableCreator($this->db_conn, $config['table_reading_restrs']);
+        $restrs_table->add_column("reading_uid", "BIGINT UNSIGNED", "DEFAULT 0", "NOT NULL");
+        $restrs_table->add_column("kanji_uid", "BIGINT UNSIGNED", "DEFAULT 0", "NOT NULL");
+        //$restrs_table->add_key("UNIQUE", array("reading_uid", "kanji_uid"));
+        $restrs_table->create();
+
+        $sense_infos_table = new DBTableCreator($this->db_conn, $config['table_sense_infos']);
+        $sense_infos_table->add_column("sense_uid", "BIGINT UNSIGNED", "DEFAULT 0", "NOT NULL");
+        $sense_infos_table->add_column("binary_raw", "VARCHAR(512)", "DEFAULT ''", "NOT NULL");
+        $sense_infos_table->create();
+
+        $sense_re_restrs_table = new DBTableCreator($this->db_conn, $config['table_stagrs']);
+        $sense_re_restrs_table->add_column("sense_uid", "BIGINT UNSIGNED", "DEFAULT 0", "NOT NULL");
+        $sense_re_restrs_table->add_column("reading_uid", "BIGINT UNSIGNED", "DEFAULT 0", "NOT NULL");
+        $sense_re_restrs_table->create();
+
+        $sense_ke_restrs_table = new DBTableCreator($this->db_conn, $config['table_stagks']);
+        $sense_ke_restrs_table->add_column("sense_uid", "BIGINT UNSIGNED", "DEFAULT 0", "NOT NULL");
+        $sense_ke_restrs_table->add_column("kanji_uid", "BIGINT UNSIGNED", "DEFAULT 0", "NOT NULL");
+        $sense_ke_restrs_table->create();
+
+        $glosses_table = new DBTableCreator($this->db_conn, $config['table_glosses']);
+        $glosses_table->add_column("sense_uid", "BIGINT UNSIGNED", "DEFAULT 0", "NOT NULL");
+        $glosses_table->add_column("binary_raw", "VARCHAR(512)", "DEFAULT ''", "NOT NULL");
+        $glosses_table->add_column("lang", "VARCHAR(128)", "DEFAULT NULL", "NULL");
+        $glosses_table->add_column("gend", "VARCHAR(128)", "DEFAULT NULL", "NULL");
+        $glosses_table->create();
+
+        $poses_table = new DBTableCreator($this->db_conn, $config['table_poses']);
+        $poses_table->add_column("sense_uid", "BIGINT UNSIGNED", "DEFAULT 0", "NOT NULL");
+        $poses_table->add_column("binary_raw", "VARCHAR(512)", "DEFAULT ''", "NOT NULL");
+        $poses_table->create();
+
+        $fields_table = new DBTableCreator($this->db_conn, $config['table_fields']);
+        $fields_table->add_column("sense_uid", "BIGINT UNSIGNED", "DEFAULT 0", "NOT NULL");
+        $fields_table->add_column("binary_raw", "VARCHAR(512)", "DEFAULT ''", "NOT NULL");
+        $fields_table->create();
+
+        $miscs_table = new DBTableCreator($this->db_conn, $config['table_miscs']);
+        $miscs_table->add_column("sense_uid", "BIGINT UNSIGNED", "DEFAULT 0", "NOT NULL");
+        $miscs_table->add_column("binary_raw", "VARCHAR(512)", "DEFAULT ''", "NOT NULL");
+        $miscs_table->create();
+
+        $dials_table = new DBTableCreator($this->db_conn, $config['table_dials']);
+        $dials_table->add_column("sense_uid", "BIGINT UNSIGNED", "DEFAULT 0", "NOT NULL");
+        $dials_table->add_column("binary_raw", "VARCHAR(512)", "DEFAULT ''", "NOT NULL");
+        $dials_table->create();
+
+        $lsources_table = new DBTableCreator($this->db_conn, $config['table_lsources']);
+        $lsources_table->add_column("sense_uid", "BIGINT UNSIGNED", "DEFAULT 0", "NOT NULL");
+        $lsources_table->add_column("binary_raw", "VARCHAR(128)", "DEFAULT ''", "NOT NULL");
+        $lsources_table->add_column("lang", "VARCHAR(128)", "DEFAULT NULL", "NULL");
+        $lsources_table->add_column("type", "VARCHAR(128)", "DEFAULT NULL", "NULL");
+        $lsources_table->add_column("wasei", "ENUM('Y', 'N')", "DEFAULT NULL", "NULL");
+        $lsources_table->create();
+
+        $xrefs_table = new DBTableCreator($this->db_conn, $config['table_xrefs']);
+        $xrefs_table->add_column("sense_uid", "BIGINT UNSIGNED", "DEFAULT 0", "NOT NULL");
+        $xrefs_table->add_column("binary_raw", "VARCHAR(512)", "DEFAULT ''", "NOT NULL");
+        $xrefs_table->add_column("t_kanji_uid", "BIGINT UNSIGNED", "DEFAULT 0", "NULL");
+        $xrefs_table->add_column("t_reading_uid", "BIGINT UNSIGNED", "DEFAULT 0", "NULL");
+        $xrefs_table->add_column("t_sense_uid", "BIGINT UNSIGNED", "DEFAULT 0", "NULL");
+        $xrefs_table->create();
+
+        $ants_table = new DBTableCreator($this->db_conn, $config['table_ants']);
+        $ants_table->add_column("sense_uid", "BIGINT UNSIGNED", "DEFAULT 0", "NOT NULL");
+        $ants_table->add_column("binary_raw", "VARCHAR(512)", "DEFAULT ''", "NOT NULL");
+        $ants_table->add_column("t_kanji_uid", "BIGINT UNSIGNED", "DEFAULT 0", "NULL");
+        $ants_table->add_column("t_reading_uid", "BIGINT UNSIGNED", "DEFAULT 0", "NULL");
+        $ants_table->add_column("t_sense_uid", "BIGINT UNSIGNED", "DEFAULT 0", "NULL");
+        $ants_table->create();
+
+        $senses_table = new DBTableCreator($this->db_conn, $config['table_senses']);
+        $senses_table->add_column("sense_uid", "BIGINT UNSIGNED", "DEFAULT 0", "NOT NULL", "PRIMARY KEY");
+        $senses_table->add_column("entry_uid", "BIGINT UNSIGNED", "DEFAULT 0", "NOT NULL");
+        $senses_table->add_column("version_added_id", "SMALLINT UNSIGNED", "DEFAULT 0", "NOT NULL");
+        $senses_table->add_column("version_removed_id", "SMALLINT UNSIGNED", "DEFAULT NULL", "NULL");
+        $senses_table->add_column("sense_index", "SMALLINT", "DEFAULT 0", "NOT NULL");
+        $senses_table->create();
+
+        $ant_virtual_table = new DBTableCreator($this->db_conn, $config['table_ants_raw']);
+        $ant_virtual_table->add_column("sense_uid", "BIGINT UNSIGNED", "DEFAULT 0", "NOT NULL");
+        $ant_virtual_table->add_column("binary_raw", "VARCHAR(512)", "DEFAULT ''", "NOT NULL");
+        $ant_virtual_table->create();
+
+        $xref_virtual_table = new DBTableCreator($this->db_conn, $config['table_xrefs_raw']);
+        $xref_virtual_table->add_column("sense_uid", "BIGINT UNSIGNED", "DEFAULT 0", "NOT NULL");
+        $xref_virtual_table->add_column("binary_raw", "VARCHAR(512)", "DEFAULT ''", "NOT NULL");
+        $xref_virtual_table->create();
+    }
+    
+    protected function test_db()
+    {
+        global $config;
+        
+        $table = new DBTableCreator($this->db_conn, $config['table_test']);
+        $table->add_column("t_timestamp", "TIMESTAMP", "", "NOT NULL", "", "");
+        $table->add_column("t_varchar", "VARCHAR(255)", "DEFAULT ''", "NULL", "", "");
+        $table->add_column("t_text", "TEXT", "", "NULL", "", "");
+        $table->add_column("t_int", "INTEGER", "", "NOT NULL", "PRIMARY KEY", "AUTO_INCREMENT");
+        $table->create();
+        
+        $this->db_conn->exec("INSERT INTO ".$config['table_test']." VALUES (NULL, '日本語', 'hello world', 234);");
+        $this->db_conn->query("SELECT * FROM ".$config['table_test'].";");
+        $result = $this->db_conn->fetch(\PDO::FETCH_ASSOC);
+        
+        if(!is_array($result))
+        {
+            throw new DBError(debug_backtrace());
+        }
+    }
     
     protected function test_utf8_data_files()
     {
-        
+        $unicode_test = new UnicodeTest();
+        $unicode_test->run_tests();
     }
     
     //todo move these unicode related functions to another class
@@ -96,7 +301,7 @@ class Installer
         $case_folding_data_file->open();
         $case_folding_data_line_iterator = $case_folding_data_file->getIterator();
         
-        $case_mapping_finfo = new FileInfo("case_mapping_f.php", $config['data_dir']);
+        $case_mapping_finfo = new FileInfo($config["case_mapping_f"], $config['data_dir']);
         $case_mapping_finfo->set_mode("w");
         $case_mapping_file = new PHPFileResource($case_mapping_finfo);
         $case_mapping_file->open();
@@ -155,14 +360,14 @@ class Installer
         $normalization_props_data_file->open();
         $normalization_props_data_iterator = $normalization_props_data_file->getIterator();
         
-        $nfc_qc_finfo = new FileInfo("nfc_qc.php", $config['data_dir']);
+        $nfc_qc_finfo = new FileInfo($config["nfc_qc"], $config['data_dir']);
         $nfc_qc_finfo->set_mode("w");
         $nfc_qc_file = new PHPFileResource($nfc_qc_finfo);
         $nfc_qc_file->open();
         $nfc_qc_file->header("<?php \n \$GLOBALS['nfc_qc'] = array(");
         $nfc_qc_file->footer(");");
         
-        $nfkc_qc_finfo = new FileInfo("nfkc_qc.php", $config['data_dir']);
+        $nfkc_qc_finfo = new FileInfo($config["nfkc_qc"], $config['data_dir']);
         $nfkc_qc_finfo->set_mode("w");
         $nfkc_qc_file = new PHPFileResource($nfkc_qc_finfo);
         $nfkc_qc_file->open();
@@ -396,7 +601,7 @@ class Installer
         $primary_composites = array_diff_key($primary_composites, array_flip($composition_exclusions));
         $primary_composites = array_flip($primary_composites);
         
-        $primary_composites_finfo = new FileInfo("primary_composites.php", $config['data_dir']);
+        $primary_composites_finfo = new FileInfo($config["primary_composites"], $config['data_dir']);
         $primary_composites_finfo->set_mode("w");
         $primary_composites_file = new PHPFileResource($primary_composites_finfo);
         $primary_composites_file->open();
@@ -412,7 +617,7 @@ class Installer
         $primary_composites_file->create_file();
         $primary_composites_file->close();
     
-        $ccc_class_map_finfo = new FileInfo("ccc_class_map.php", $config['data_dir']);
+        $ccc_class_map_finfo = new FileInfo($config["ccc_class_map"], $config['data_dir']);
         $ccc_class_map_finfo->set_mode("w");
         $ccc_class_map_file = new PHPFileResource($ccc_class_map_finfo);
         $ccc_class_map_file->open();
@@ -428,7 +633,7 @@ class Installer
         $ccc_class_map_file->close();
     
         
-        $canonical_decomposition_finfo = new FileInfo("canonical_decompositions.php", $config['data_dir']);
+        $canonical_decomposition_finfo = new FileInfo($config["canonical_decompositions"], $config['data_dir']);
         $canonical_decomposition_finfo->set_mode("w");
         $canonical_decomposition_file = new PHPFileResource($canonical_decomposition_finfo);
         $canonical_decomposition_file->open();
@@ -445,14 +650,14 @@ class Installer
         $canonical_decomposition_file->close();
     
         
-        $comaptibility_decompositions_finfo = new FileInfo("compatibility_decompositions.php", $config['data_dir']);
+        $comaptibility_decompositions_finfo = new FileInfo($config["compatibility_decompositions"], $config['data_dir']);
         $comaptibility_decompositions_finfo->set_mode("w");
         $comaptibility_decompositions_file = new PHPFileResource($comaptibility_decompositions_finfo);
         $comaptibility_decompositions_file->open();
         $comaptibility_decompositions_file->header("<?php \n \$GLOBALS['compat_decomp'] = array(");
         $comaptibility_decompositions_file->footer(");");
         
-        while(list($decomposition_char, $decomposition_values) = each($compatibility_decompositions))
+        while(list($decomposition_char, $decomposition_value) = each($compatibility_decompositions))
         {
             $decomposition_char = PHPFileResource::sanatize_string_literal($decomposition_char);
             $decomposition_value = PHPFileResource::sanatize_string_literal($decomposition_value);

@@ -2,6 +2,8 @@
 
 namespace MKDict\Command;
 
+use MKDict\Command\Exception\OptionDoesNotExistException;
+
 class CommandArgs extends \ArrayObject
 {
     protected $command_args;
@@ -65,7 +67,7 @@ class CommandArgs extends \ArrayObject
                         break;
 
                     case "--test-db":
-                        $this['test_db'] = true;
+                        $this['test_db'] = "true";
                         break;
 
                     case "--create-db":
@@ -90,5 +92,15 @@ class CommandArgs extends \ArrayObject
                 }
             }
         }
+    }
+    
+    public function offsetGet($offset)
+    {
+        if(!$this->offsetExists($offset))
+        {
+            throw new OptionDoesNotExistException(debug_backtrace(), $offset);
+        }
+        
+        return parent::offsetGet($offset);
     }
 }
