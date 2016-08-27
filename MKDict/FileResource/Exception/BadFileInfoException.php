@@ -10,11 +10,11 @@ class BadFileInfoException extends FatalException
     public $file_info;
     public $msg;
     
-    public function __construct(array $stack_trace, FileInfo $file_info, $msg)
+    public function __construct(FileInfo $file_info, $msg)
     {
         $this->file_info = $file_info;
         $this->msg = $msg;
-        parent::__construct($stack_trace);
+        parent::__construct(debug_backtrace());
     }
     
     public function get_message()

@@ -80,6 +80,8 @@ class CommandArgs extends \ArrayObject
 
                     case "--debug-version":
                         $this['debug_version'] = true;
+                        error_reporting(E_ALL);
+                        libxml_use_internal_errors(true);
                         break;
 
                     case "--with-rollback":
@@ -98,7 +100,8 @@ class CommandArgs extends \ArrayObject
     {
         if(!$this->offsetExists($offset))
         {
-            throw new OptionDoesNotExistException(debug_backtrace(), $offset);
+            return false;
+            //throw new OptionDoesNotExistException(debug_backtrace(), $offset);
         }
         
         return parent::offsetGet($offset);

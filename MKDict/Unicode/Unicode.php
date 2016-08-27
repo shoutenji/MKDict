@@ -2,7 +2,7 @@
 
 namespace MKDict\Unicode;
 
-use MKDict\FileResource\FileResouce;
+use MKDict\FileResource\GZFileResource;
 
 class Unicode
 {
@@ -35,7 +35,7 @@ class Unicode
     const UTF32_BOM_REVERSED = "\xFF\xFE\x00\x00";
     
     //replacement character U+FFFD
-    const UTF8_REPLACEMENT = "EF\xBF\xBD";
+    const UTF8_REPLACEMENT = "\xEF\xBF\xBD";
     
     /**
      * Verifies if text content is valid UTF-8.
@@ -44,19 +44,24 @@ class Unicode
      * definition #D92 by analyzing the bit distributions. See tables 3-6 and 3-7.
      * Ignores the unicode BOM character U+FEFF if present (which would be an error).
      *
-     * @param resource $gzfile_handle A file handle opened by gzopen()
+     * @param GZFileResource $file A file handle opened by gzopen()
      *
      * @return boolean True if text content is valid UTF-8 false otherwise
      */
-    public static function utf8_validate_file(FileResouce $file)
+    public static function utf8_validate_file(GZFileResource $file)
     {
         global $config;
         
         $first_read = true;
         
+        $file->rewind();
+        
         do
         {
             $utf_char_stream = $file->read($config['GZ_buffer_rw_size']);
+            
+            //echo "utf_char_stream:\n".Unicode::hexdump($utf_char_stream)."\n";
+            //die();
             
             if($first_read)
             {
@@ -105,7 +110,7 @@ class Unicode
                         return false;
                     }
                     
-                    $pos++;
+                    $pos += 2;
                     continue;
                 }
                 //character is three bytes long
@@ -228,7 +233,7 @@ class Unicode
                 }
             }
         }
-        while(!$file->feof(1));
+        while(!$file->feof());
         
         return true;
     }

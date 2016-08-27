@@ -8,6 +8,7 @@ use MKDict\FileResource\Exception\FileResourceNotAvailableException;
 use MKDict\FileResource\Exception\FReadFailureException;
 use MKDict\FileResource\Exception\FWriteFailureException;
 use MKDict\FileResource\Exception\FileTooLargeException;
+use MKDict\FileResource\Exception\FileIOFailureException;
 
 class PlainTextFileResource implements FileResource, Downloadable
 {
@@ -28,23 +29,41 @@ class PlainTextFileResource implements FileResource, Downloadable
             $bytes = $file->read($config['HTTP_stream_chunk_size']);
             if(@filesize($this->file_info->get_path_name()) + strlen($bytes) > $config['max_file_size'])
             {
-                throw new FileTooLargeException(debug_backtrace(), $this->file_info);
+                throw new FileTooLargeException($this->file_info);
             }
-            $this->write();
+            $this->write($bytes);
         }
         while(!$file->feof());
     }
     
+    public function set_finfo(FileInfo $finfo)
+    {
+        $this->file_info = $finfo;
+    }
+    
+    public function get_finfo()
+    {
+        return $this->file_info;
+    }
+    
+    public function seek($offset, $whence)
+    {
+        if(0 > @fseek($this->file_handle, $offset, $whence))
+        {
+            throw new FileIOFailureException($this->file_info);
+        }
+    }
+    
     public function read($num_bytes)
     {
-        $result = @fread($this->file_handle, $num_bytes);
+        $bytes = @fread($this->file_handle, $num_bytes);
         
-        if(false === $result)
+        if(false === $bytes)
         {
-            throw new FReadFailureException(debug_backtrace(), $this->file_info);
+            throw new FReadFailureException($this->file_info);
         }
         
-        return $result;
+        return $bytes;
     }
     
     public function write($bytes)
@@ -53,7 +72,7 @@ class PlainTextFileResource implements FileResource, Downloadable
         
         if(false === $result)
         {
-            throw new FWriteFailureException(debug_backtrace(), $this->file_info);
+            throw new FWriteFailureException($this->file_info);
         }
     }
     
@@ -80,5 +99,15 @@ class PlainTextFileResource implements FileResource, Downloadable
         }
         
         return \fclose($this->file_handle);
+    }
+    
+    public function rewind()
+    {
+        if(empty($this->file_handle))
+        {
+            return false;
+        }
+        
+        return @\rewind($this->file_handle);
     }
 }

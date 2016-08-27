@@ -61,8 +61,8 @@ $config = array_merge($config, array(
 
 $config = array_merge($config, array(
     'EDRDG_domain' => 'http://ftp.monash.edu.au',
-    'EDRDG_path' => '/pub/nihongo',
-    'JMDict_filename' => '/JMdict_e.gz',
+    'EDRDG_path' => 'pub/nihongo',
+    'JMDict_filename' => 'JMdict_e.gz',
     'HTTP_stream_chunk_size' => 4096,
     'max_file_size' => 100e6, //100mb limit on all file sizes
     'GZ_buffer_rw_size' => 2048,

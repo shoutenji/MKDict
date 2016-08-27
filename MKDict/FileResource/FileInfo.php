@@ -9,6 +9,7 @@ use MKDict\FileResource\Exception\FileIOFailureException;
 use MKDict\FileResource\Exception\FileTooLargeException;
 use MKDict\FileResource\Exception\FileNotWriteableException;
 use MKDict\FileResource\Exception\FileNotReadableException;
+use MKDict\FileResource\Exception\FileResourceNotAvailableException;
 
 class FileInfo
 {
@@ -21,6 +22,7 @@ class FileInfo
     protected $ignore_blank_lines;
     protected $comment_char;
     protected $value_delimiter;
+    protected $is_local;
     
     const OPTION_IGNORE_BLANK_LINES = 1;
     const OPTION_COMMENT_CHAR = 2;
@@ -34,6 +36,7 @@ class FileInfo
         $this->stream_context = $stream_context;
         $this->mode = $mode;
         $this->use_include = $use_include;
+        $this->is_local = true;
     }
     
     public function has_stream_context()
@@ -58,13 +61,9 @@ class FileInfo
         {
             return "$this->path/$this->name";
         }
-        else if(!empty($this->url))
-        {
-            return $this->url->to_string();
-        }
         else
         {
-            throw new BadFileInfoException(debug_backtrace(), $this, "A FileInfo object must have at least either a full file path or url specified.");
+            throw new BadFileInfoException($this, "A FileInfo object must have at least either a full file path or url specified.");
         }
     }
     
@@ -75,19 +74,16 @@ class FileInfo
         {
             return $this->url->to_string();
         }
-        else if(!empty($this->path) && !empty($this->name))
-        {
-            return "$this->path/$this->name";
-        }
         else
         {
-            throw new BadFileInfoException(debug_backtrace(), $this, "A FileInfo object must have at least either a full file path or url specified.");
+            throw new BadFileInfoException($this, "A FileInfo object must have at least either a full file path or url specified.");
         }
     }
     
     public function set_url(Url $url)
     {
         $this->url = $url;
+        $this->is_local = false;
     }
     
     public function set_mode(string $mode)
@@ -136,114 +132,146 @@ class FileInfo
     
     public function is_local()
     {
-        $path_name = $this->get_path_name();
-        //this equality will hold IFF the url property is empty and the path components are not
-        return !empty($path_name) && $path_name === $this->get_url();
+        return $this->is_local;
     }
     
     //if the file doesn't meet certain conditions, you can't get a handle for it
-    public function get_handle()
+    public function get_handle(bool $is_compressed = false)
     {
         global $config;
         
-        $path_name = $this->get_path_name();
-        $exists = @file_exists($path_name);
-        
         if(empty($this->mode))
         {
-            throw new BadFileInfoException(debug_backtrace(), $this, "A FileInfo object must a mode specified.");
+            throw new BadFileInfoException($this, "A FileInfo object must a mode specified.");
         }
         
-        //if this is a local file, we should check if the file exists and ensure it has a reasonable size. file_exists() returns false for urls
+        //if the file is remote, then we don't have to do any filesize or permissions checking
         if($this->is_local())
         {
-            if(in_array($this->mode, array("r","r+")) && !$exists)
-            {
-                throw new FileDoesNotExistException(debug_backtrace(), $this);
-            }
+            $file_path = $this->get_path_name();
+            $exists = @file_exists($file_path);
             
             switch($this->mode)
             {
                 case 'r':
+                case 'rt':
+                case 'rb':
                     if(!$exists)
                     {
-                        throw new FileDoesNotExistException(debug_backtrace(), $this);
+                        throw new FileDoesNotExistException($this);
                     }
-                    if(!@is_readable($path_name))
+                    if(!@is_readable($file_path))
                     {
-                        throw new FileNotReadableException(debug_backtrace(), $this);
+                        throw new FileNotReadableException($this);
                     }
-                    if(false === $size = @filesize($path_name))
+                    if(false === $size = @filesize($file_path))
                     {
-                        throw new FileIOFailureException(debug_backtrace(), $this);
+                        throw new FileIOFailureException($this);
                     }
                     else
                     {
                         if($size > $config['max_file_size'])
                         {
-                            throw new FileTooLargeException(debug_backtrace(), $this);
+                            throw new FileTooLargeException($this);
                         }
                     }
                     break;
                     
                 case 'w':
+                case 'wt':
+                case 'wb':
                 case 'a':
+                case 'at':
+                case 'ab':
                 case 'x':
+                case 'xt':
+                case 'xb':
                 case 'c':
-                    if($exists && !@is_writeable($path_name))
+                case 'ct':
+                case 'cb':
+                    if($exists && !@is_writeable($file_path))
                     {
-                        throw new FileNotWriteableException(debug_backtrace(), $this);
+                        throw new FileNotWriteableException($this);
                     }
                     break;
                     
                 case 'r+':
                     if(!$exists)
                     {
-                        throw new FileDoesNotExistException(debug_backtrace(), $this);
+                        throw new FileDoesNotExistException($this);
                     }
                 case 'w+':
+                case 'w+t':
+                case 'w+b':
                 case 'a+':
+                case 'a+t':
+                case 'a+b':
                 case 'x+':
+                case 'x+t':
+                case 'x+b':
                 case 'c+':
-                    if($exists && !@is_readable($path_name))
+                case 'c+t':
+                case 'c+b':
+                    if($exists && !@is_readable($file_path))
                     {
-                        throw new FileNotReadableException(debug_backtrace(), $this);
+                        throw new FileNotReadableException($this);
                     }
                     
-                    if($exists && !@is_writeable($path_name))
+                    if($exists && !@is_writeable($file_path))
                     {
-                        throw new FileNotWriteableException(debug_backtrace(), $this);
+                        throw new FileNotWriteableException($this);
                     }
-                    if(false === $size = @filesize($path_name))
+                    if($exists)
                     {
-                        throw new FileIOFailureException(debug_backtrace(), $this);
-                    }
-                    else
-                    {
-                        if($size > $config['max_file_size'])
+                        if(false === $size = @filesize($file_path))
                         {
-                            throw new FileTooLargeException(debug_backtrace(), $this);
+                            throw new FileIOFailureException($this);
+                        }
+                        else
+                        {
+                            if($size > $config['max_file_size'])
+                            {
+                                throw new FileTooLargeException($this);
+                            }
                         }
                     }
                     break;
                 
                 default:
-                    throw new BadFileInfoException(debug_backtrace(), $this, "Bad file mode specified.");
+                    throw new BadFileInfoException($this, "Bad file mode specified.");
             }
+        }
+        else
+        {
+            $file_path = $this->get_url();
         }
         
         if($this->has_stream_context())
         {
-            $handle = @fopen($path_name, $this->mode, $this->use_include, $this->get_stream_context());
+            if($is_compressed)
+            {
+                $handle = @\gzopen($file_path, $this->mode, $this->use_include, $this->get_stream_context());
+            }
+            else
+            {
+                $handle = @\fopen($file_path, $this->mode, $this->use_include, $this->get_stream_context());
+            }
         }
         else
         {
-            $handle = @fopen($path_name, $this->mode, $this->use_include);
+            if($is_compressed)
+            {
+                $handle = @\gzopen($file_path, $this->mode, $this->use_include);
+            }
+            else
+            {
+                $handle = @\fopen($file_path, $this->mode, $this->use_include);
+            }
         }
         
         if(false === $handle)
         {
-            throw new FileResourceNotAvailableException(debug_backtrace(), $this->file_info);
+            throw new FileResourceNotAvailableException($this);
         }
         
         return $handle;
