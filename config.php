@@ -66,10 +66,10 @@ $config = array_merge($config, array(
     'HTTP_stream_chunk_size' => 4096,
     'max_file_size' => 100e6, //100mb limit on all file sizes
     'GZ_buffer_rw_size' => 2048,
-    'DTD_max_strlen' => pow(2,16),
     'parser_stream_read_size' => 4096,
     'merge_buffer_size' => 1024,
     'element_buffer_size' => 2048,
+    'dtd_max_len' => pow(2,18),
 ));
 
 /*

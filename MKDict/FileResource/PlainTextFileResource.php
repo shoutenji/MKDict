@@ -88,7 +88,7 @@ class PlainTextFileResource implements FileResource, Downloadable
             return true;
         }
         
-        return \feof($this->file_handle);
+        return @feof($this->file_handle);
     }
     
     public function close()
@@ -98,7 +98,7 @@ class PlainTextFileResource implements FileResource, Downloadable
             return true;
         }
         
-        return \fclose($this->file_handle);
+        return @fclose($this->file_handle);
     }
     
     public function rewind()
@@ -108,6 +108,6 @@ class PlainTextFileResource implements FileResource, Downloadable
             return false;
         }
         
-        return @\rewind($this->file_handle);
+        return @rewind($this->file_handle);
     }
 }

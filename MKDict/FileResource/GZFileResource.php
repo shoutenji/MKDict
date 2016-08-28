@@ -2,6 +2,7 @@
 
 namespace MKDict\FileResource;
 
+use MKDict\FileResource\FileResource;
 use MKDict\FileResource\Downloadable;
 use MKDict\FileResource\Exception\FReadFailureException;
 use MKDict\FileResource\Exception\FWriteFailureException;
@@ -74,6 +75,7 @@ class GZFileResource implements FileResource, Downloadable
         }
     }
     
+    //todo this, along with other implementers, should just return a handle.
     public function open()
     {
         $this->file_handle = $this->file_info->get_handle(true);
@@ -86,7 +88,7 @@ class GZFileResource implements FileResource, Downloadable
             return true;
         }
         
-        return \gzeof($this->file_handle);
+        return @gzeof($this->file_handle);
     }
     
     public function close()
@@ -96,7 +98,7 @@ class GZFileResource implements FileResource, Downloadable
             return true;
         }
         
-        return \gzclose($this->file_handle);
+        return @gzclose($this->file_handle);
     }
     
     public function rewind()
@@ -106,6 +108,6 @@ class GZFileResource implements FileResource, Downloadable
             return false;
         }
         
-        return @\gzrewind($this->file_handle);
+        return @gzrewind($this->file_handle);
     }
 }
