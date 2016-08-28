@@ -44,11 +44,19 @@ class DBConnection
 
     public function start_transaction()
     {
+        if(!$this->pdo)
+        {
+            throw new DBConnectionError($dsn, $user, __METHOD__." was called but no database connection has been established.");
+        }
         $this->pdo->beginTransaction();
     }
 
     public function roll_back()
     {
+        if(!$this->pdo)
+        {
+            throw new DBConnectionError($dsn, $user, __METHOD__." was called but no database connection has been established.");
+        }
         $this->pdo->rollBack();
     }
 

@@ -5,6 +5,13 @@ define('USORT_EQUALITY_CONSTANT', PHP_MAJOR_VERSION >= 7 ? 0 : 1);
 
 function main_exception_handler(Throwable $e)
 {
+    global $options;
+    
+    if($options['with_rollback'])
+    {
+        $this->db_conn->start_transaction();
+    }
+    
     if(is_a($e, "MKDict\\Exception\\FatalException"))
     {
         echo $e->get_message()."\n";
@@ -31,7 +38,7 @@ $config = array_merge($config, array(
 $config = array_merge($config, array(
     'table_test' => $config['db_table_prefix'].'test',
     'table_meta' => $config['db_table_prefix'].'meta',
-    'table_dict_info' => $config['db_table_prefix'].'dict_info',
+    'table_dict_version' => $config['db_table_prefix'].'dict_info',
     'table_entries' => $config['db_table_prefix'].'entries',
     'table_ants_raw' => $config['db_table_prefix'].'ants_raw',
     'table_xrefs_raw' => $config['db_table_prefix'].'xrefs_raw',

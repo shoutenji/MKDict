@@ -65,9 +65,8 @@ class Installer
 
         $this->db_conn->exec("INSERT INTO ".$config['table_meta']." VALUES ('uid_counter', '0');");
 
-        $dictionary_meta_table = new DBTableCreator($this->db_conn, $config['table_dict_info']);
+        $dictionary_meta_table = new DBTableCreator($this->db_conn, $config['table_dict_version']);
         $dictionary_meta_table->add_column("download_date", "TIMESTAMP", "", "NOT NULL");
-        $dictionary_meta_table->add_column("xml_dec", "VARCHAR(255)", "DEFAULT ''", "NOT NULL");
         $dictionary_meta_table->add_column("dtd_raw", "TEXT", "", "NULL");
         $dictionary_meta_table->add_column("dtd_canonical", "TEXT", "", "NULL");
         $dictionary_meta_table->add_column("dtd_version", "TINYINT UNSIGNED", "DEFAULT 0", "NOT NULL");
