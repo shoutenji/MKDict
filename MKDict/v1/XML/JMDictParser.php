@@ -149,6 +149,7 @@ class JMDictParser extends DictionaryParser
                 if($duplicate_id)
                 {
                     $this->logger->duplicate_sequence_id($this->entry);
+                    $this->entry->invalid_data = true;
                     $duplicate_id = false;
                 }
                 break;
@@ -332,8 +333,7 @@ class JMDictParser extends DictionaryParser
             return false;
         }
 
-        //just check if the entry contains all the elements required by the DTD
-        if(empty($this->entry->sequence_id))
+        if(empty($this->entry->sequence_id)) //remember boolean false evaluates to empty
         {
             $this->logger->sequence_id_missing_or_invalid($this->entry);
             return false;
@@ -949,14 +949,14 @@ class JMDictParser extends DictionaryParser
                 case 3:
                     if(!is_numeric($values[2]))
                     {
-                        $this->logger->invalid_reference_type("Invalid reference element. 3rd component is not a valid integer:\n", $reference_type);
+                        $this->logger->invalid_reference_type($reference_type, "Invalid reference element. 3rd component is not a valid integer");
                         continue;
                     }
                     $results = $this->jmdb->k_and_r_search($this->version_id, trim(strval($values[0])), trim(strval($values[1])), intval(trim($values[2])));
                     break;
 
                 default:
-                    $this->logger->invalid_reference_type("Invalid reference element format:\n", $reference_type);
+                    $this->logger->invalid_reference_type($reference_type, "Invalid reference element format:\n");
                     continue;
                     break;
             }

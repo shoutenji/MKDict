@@ -98,6 +98,7 @@ abstract class DictionaryParser
 
 
     //TODO sanatize for SQL injection
+    //todo right now validate_int() does not log an errors but this function does. need consistent behaviour
     protected function validate_string($data, $can_be_empty = false)
     {
         global $config;

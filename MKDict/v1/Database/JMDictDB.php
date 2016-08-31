@@ -1205,7 +1205,7 @@ class JMDictDB implements JMDictDBInterface
 
         if(empty($pre_results))
         {
-            $this->logger->k_or_r_search_failure(compact("stringv", "sense_index"));
+            $this->logger->k_or_r_search_failure($stringv, $sense_index);
             return false;
         }
 
@@ -1245,7 +1245,7 @@ class JMDictDB implements JMDictDBInterface
 
         if(empty($results))
         {
-            $this->logger->k_or_r_search_failure(compact("stringv", "sense_index"));
+            $this->logger->k_or_r_search_failure($stringv, $sense_index);
             return false;
         }
 
@@ -1272,7 +1272,7 @@ class JMDictDB implements JMDictDBInterface
 
         if(empty($pre_results))
         {
-            $this->logger->k_and_r_search_failure(compact("kanji_binary", "reading_binary", "sense_index"));
+            $this->logger->k_and_r_search_failure($kanji_binary, $reading_binary, $sense_index);
             return false;
         }
 
@@ -1309,7 +1309,7 @@ class JMDictDB implements JMDictDBInterface
 
         if(empty($results))
         {
-            $this->logger->k_and_r_search_failure(compact("kanji_binary", "reading_binary", "sense_index"));
+            $this->logger->k_and_r_search_failure($kanji_binary, $reading_binary, $sense_index);
             return false;
         }
 
