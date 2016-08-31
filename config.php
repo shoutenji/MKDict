@@ -7,11 +7,6 @@ function main_exception_handler(Throwable $e)
 {
     global $options;
     
-    if($options['with_rollback'])
-    {
-        $this->db_conn->start_transaction();
-    }
-    
     if(is_a($e, "MKDict\\Exception\\FatalException"))
     {
         echo $e->get_message()."\n";
@@ -77,6 +72,8 @@ $config = array_merge($config, array(
     'merge_buffer_size' => 1024,
     'element_buffer_size' => 2048,
     'dtd_max_len' => pow(2,18),
+    'string_max_byte_len' => 1024,
+    'jmdict_ref_field_delimiter' => "\xE3\x83\xBB", //・
 ));
 
 /*
