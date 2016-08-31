@@ -2,7 +2,17 @@
 
 namespace MKDict\v1\XML;
 
+use MKDict\DTD\Exception\DTDError;
+use MKDict\Unicode\Unicode;
+use MKDict\FileResource\Exception\FileIOFailureException;
+
 use MKDict\v1\XML\JMDictParser;
+use MKDict\v1\Database\JMDictDB;
+use MKDict\v1\Database\JMDictEntry;
+use MKDict\v1\Database\JMDictKanjiElement;
+use MKDict\v1\Database\JMDictReadingElement;
+use MKDict\v1\Database\JMDictSenseElement;
+use MKDict\v1\Database\JMDictStringElement;
 
 class JMDictParser extends JMDictParser
 {
@@ -37,6 +47,11 @@ class JMDictParser extends JMDictParser
     const ELEMENT_SENSE_DIAL = 'dial';
     const ELEMENT_GLOSS_PRI = 'pri';
     const ELEMENT_JMDOCUMENT = 'JMdict';
+    
+    public function get_parser_passes()
+    {
+        return array_merge(parent::get_parser_passes(), array("parser_pass_2"));
+    }
 
     public function character_data_handler($parser, $data)
     {
@@ -45,7 +60,7 @@ class JMDictParser extends JMDictParser
 
     public function start_element_handler($parser, $name, $attribs)
     {
-        global $mk_exceptions;
+        global $options;
 
         $this->attribs = $attribs;
 
@@ -55,7 +70,7 @@ class JMDictParser extends JMDictParser
         {
             if($name !== $this->dtd['document_name'])
             {
-                $mk_exceptions->xml_missing_document_root();
+                throw new DTDError("Document name missing");
             }
             $is_root = true;
         }
@@ -63,7 +78,7 @@ class JMDictParser extends JMDictParser
 
         if(!isset($this->dtd['elements'][$name]))
         {
-            $mk_exceptions->xml_unknown_element();
+           throw new DTDError("Unrecognized element name: $name");
         }
 
         if(!$is_root)
@@ -109,7 +124,7 @@ class JMDictParser extends JMDictParser
                     break;
 
                 default:
-                    //$mk_exceptions->unrecognized_dtd_element($name);
+                    throw new DTDError("Unrecognized element name: $name");
                     break;
             }
         }
@@ -118,12 +133,19 @@ class JMDictParser extends JMDictParser
 
     public function end_element_handler($parser, $name)
     {
-        global $mk_exceptions;
-
+        global $config;
+        
+        $duplicate_id = false;
+        
         switch($name)
         {
             case self::ELEMENT_ENTRY:
                 $this->insert_entry();
+                if($duplicate_id)
+                {
+                    $this->logger->duplicate_sequence_id($this->entry);
+                    $duplicate_id = false;
+                }
                 break;
 
             case self::ELEMENT_ENTRY_SEQUENCE:
@@ -132,12 +154,12 @@ class JMDictParser extends JMDictParser
                 //but it ensures we wont overwrite an entry in the buffer and thereby fail to record duplicate entries in the tmp file later on
                 if(in_array($this->entry->sequence_id, $this->sequence_ids))
                 {
-                    $this->processing_errors_collection->duplicate_sequence_id($this->entry);
+                    $duplicate_id = true;
                 }
                 else
                 {
                     $this->sequence_ids[] = $this->entry->sequence_id;
-                    if(count($this->sequence_ids) >= INTEGER_ARRAY_MAX_SIZE)
+                    if(count($this->sequence_ids) >= $config['int_array_max_size'])
                     {
                         $this->write_sequence_ids_to_file();
                     }
@@ -256,7 +278,7 @@ class JMDictParser extends JMDictParser
                 break;
 
             default:
-                //$mk_exceptions->unrecognized_dtd_element($name);
+                throw new DTDError("Unrecognized element name: $name");
                 break;
         }
         $this->character_buffer = "";
@@ -266,22 +288,22 @@ class JMDictParser extends JMDictParser
 
     protected function set_binary_fields(JMDictStringElement &$element)
     {
-        $binary_nfc = normalize_text($element->binary_raw, UTF_NORMALIZE_NFC, self::$ENTITY_ID);
+        $binary_nfc = Unicode::normalize_text($element->binary_raw, UTF_NORMALIZE_NFC, self::$ENTITY_ID);
         $element->binary_nfc = $element->binary_raw === $binary_nfc ? null : $binary_nfc;
 
-        $binary_nfd = normalize_text($element->binary_raw, UTF_NORMALIZE_NFD, self::$ENTITY_ID);
+        $binary_nfd = Unicode::normalize_text($element->binary_raw, UTF_NORMALIZE_NFD, self::$ENTITY_ID);
         $element->binary_nfd = $element->binary_raw === $binary_nfd ? null : $binary_nfd;
 
-        $binary_nfkc = normalize_text($element->binary_raw, UTF_NORMALIZE_NFKC, self::$ENTITY_ID);
+        $binary_nfkc = Unicode::normalize_text($element->binary_raw, UTF_NORMALIZE_NFKC, self::$ENTITY_ID);
         $element->binary_nfkc = $element->binary_raw === $binary_nfkc ? null : $binary_nfkc;
 
-        $binary_nfkd = normalize_text($element->binary_raw, UTF_NORMALIZE_NFKD, self::$ENTITY_ID);
+        $binary_nfkd = Unicode::normalize_text($element->binary_raw, UTF_NORMALIZE_NFKD, self::$ENTITY_ID);
         $element->binary_nfkd = $element->binary_raw === $binary_nfkd ? null : $binary_nfkd;
 
-        $binary_nfd_casefolded = normalize_text($element->binary_raw, UTF_NORMALIZE_NFD_CASEFOLD, self::$ENTITY_ID);
+        $binary_nfd_casefolded = Unicode::normalize_text($element->binary_raw, UTF_NORMALIZE_NFD_CASEFOLD, self::$ENTITY_ID);
         $element->binary_nfd_casefolded = $element->binary_raw === $binary_nfd_casefolded ? null : $binary_nfd_casefolded;
 
-        $binary_nfkd_casefolded = normalize_text($element->binary_raw, UTF_NORMALIZE_NFKD_CASEFOLD, self::$ENTITY_ID);
+        $binary_nfkd_casefolded = Unicode::normalize_text($element->binary_raw, UTF_NORMALIZE_NFKD_CASEFOLD, self::$ENTITY_ID);
         $element->binary_nfkd_casefolded = $element->binary_raw === $binary_nfkd_casefolded ? null : $binary_nfkd_casefolded;
     }
 
@@ -308,19 +330,19 @@ class JMDictParser extends JMDictParser
         //just check if the entry contains all the elements required by the DTD
         if(empty($this->entry->sequence_id))
         {
-            $this->processing_errors_collection->sequence_id_missing_or_invalid($this->entry);
+            $this->logger->sequence_id_missing_or_invalid($this->entry);
             return false;
         }
 
         if(empty($this->entry->readings))
         {
-            $this->processing_errors_collection->missing_reading_element($this->entry);
+            $this->logger->missing_reading_element($this->entry);
             return false;
         }
 
         if(empty($this->entry->senses))
         {
-            $this->processing_errors_collection->missing_sense_element($this->entry);
+            $this->logger->missing_sense_element($this->entry);
             return false;
         }
 
@@ -328,7 +350,7 @@ class JMDictParser extends JMDictParser
         {
             if(empty($reading->binary_raw))
             {
-                $this->processing_errors_collection->missing_binary_field($this->entry);
+                $this->logger->missing_binary_field($this->entry);
                 return false;
             }
         }
@@ -337,7 +359,7 @@ class JMDictParser extends JMDictParser
         {
             if(empty($kanji->binary_raw))
             {
-                $this->processing_errors_collection->missing_binary_field($this->entry);
+                $this->logger->missing_binary_field($this->entry);
                 return false;
             }
         }
@@ -347,7 +369,7 @@ class JMDictParser extends JMDictParser
 
     protected function insert_entry()
     {
-        //if the entry does not contain valid data, then issue a warning and skip this entry's processing
+        //if the entry does not contain valid data, it's safe now to skip this entry's processing
         if(false === $this->entry_validate())
         {
             return;
@@ -368,17 +390,6 @@ class JMDictParser extends JMDictParser
             }
         }
 
-        /*
-        if($this->version_id == 1 || !$this->jmdb->sequence_id_exists($this->entry->sequence_id))
-        {
-            $this->insert_new_entry();
-        }
-        else
-        {
-            $this->merge_entry();
-        }
-        */
-
         if($this->version_id == 1)
         {
             $this->insert_new_entry();
@@ -392,42 +403,36 @@ class JMDictParser extends JMDictParser
     //TODO break this up into smaller functions
     protected function write_merge_buffer()
     {
-        global $pdo, $mk_exceptions, $logger;
+        global $config;
 
-        //TODO SQL injection
-        $sequence_ids_flat = implode(",", array_keys($this->entry_buffer));
+        $sequence_ids_flat = DBConnection::flatten_array(array_keys($this->entry_buffer));
 
-        $pdo->prepare("SELECT entry_uid, sequence_id FROM ".TABLE_JMDICT_ENTRIES." WHERE sequence_id IN($sequence_ids_flat) AND ".$pdo->version_check()." ORDER BY entry_uid;");
-        $pdo->bindValue(":version_added_id", $this->version_id, PDO::PARAM_INT);
-        $pdo->bindValue(":version_removed_id", $this->version_id, PDO::PARAM_INT);
-        $pdo->execute();
-        $entries = $pdo->fetchAll(PDO::FETCH_ASSOC);
-
-        $entry_uids_flat = flatten_uids(array_column($entries, "entry_uid"));
-
+        $entries_uids = $this->jmdb->get_entry_uids($sequence_ids_flat);
+        $entry_uids_flat = DBConnection::flatten_array(array_column($entries_uids, "entry_uid"));
+        
         //kanjis
-        $kanjis = $this->jmdb->get_kanjis($entry_uids_flat, $this->version_id, PDO::FETCH_ASSOC | PDO::FETCH_GROUP, "entry_uid");
+        $kanjis = $this->jmdb->get_kanjis($entry_uids_flat, $this->version_id, \PDO::FETCH_ASSOC | \PDO::FETCH_GROUP, "entry_uid");
 
         $kanji_uids = array();
         foreach($kanjis as $kanji)
         {
             $kanji_uids = array_merge($kanji_uids, array_column($kanji, "kanji_uid"));
         }
-        $kanji_uids_flat = flatten_uids($kanji_uids);
+        $kanji_uids_flat = DBConnection::flatten_array($kanji_uids);
         unset($kanji_uids);
 
         $kanji_pris = $this->jmdb->get_kanji_pris($kanji_uids_flat);
         $kanji_infos = $this->jmdb->get_kanji_infos($kanji_uids_flat);
 
         //readings
-        $readings = $this->jmdb->get_readings($entry_uids_flat, $this->version_id, PDO::FETCH_ASSOC | PDO::FETCH_GROUP, "entry_uid", array("binary_raw", "nokanji"));
+        $readings = $this->jmdb->get_readings($entry_uids_flat, $this->version_id, \PDO::FETCH_ASSOC | \PDO::FETCH_GROUP, "entry_uid", array("binary_raw", "nokanji"));
 
         $reading_uids = array();
         foreach($readings as $reading)
         {
             $reading_uids = array_merge($reading_uids, array_column($reading, "reading_uid"));
         }
-        $reading_uids_flat = flatten_uids($reading_uids);
+        $reading_uids_flat = DBConnection::flatten_array($reading_uids);
         unset($reading_uids);
 
         $reading_pris = $this->jmdb->get_reading_pris($reading_uids_flat);
@@ -443,7 +448,7 @@ class JMDictParser extends JMDictParser
         {
             $sense_uids = array_merge($sense_uids, array_column($sense, "sense_uid"));
         }
-        $sense_uids_flat = flatten_uids($sense_uids);
+        $sense_uids_flat = DBConnection::flatten_array($sense_uids);
         unset($sense_uids);
 
         $sense_infos = $this->jmdb->get_sense_infos($sense_uids_flat);
@@ -520,7 +525,7 @@ class JMDictParser extends JMDictParser
                 $that_reading_obj = new JMDictReadingElement();
                 $that_reading_obj->reading_uid = $that_reading['reading_uid'];
                 $that_reading_obj->binary_raw = $that_reading['binary_raw'];
-                $that_reading_obj->b_no_kanji = (INT) $that_reading['nokanji'];
+                $that_reading_obj->b_no_kanji = intval($that_reading['nokanji']);
 
                 if(isset($reading_restrs[$that_reading['reading_uid']]))
                 {
@@ -643,10 +648,7 @@ class JMDictParser extends JMDictParser
             foreach($expired_kanjis as $expired_kanji)
             {
                 $this->jmdb->remove_kanji($expired_kanji->kanji_uid, $this->version_id);
-                if($this->log_merge_ops)
-                {
-                    $logger->expired_kanji($expired_kanji, $this->version_id);
-                }
+                $this->logger->expired_kanji($expired_kanji, $this->version_id);
             }
 
             foreach($this_entry->kanjis as $this_kanji)
@@ -655,20 +657,14 @@ class JMDictParser extends JMDictParser
                 {
                     $this_kanji->entry_uid = $this_entry_uid;
                     $this_kanji->kanji_uid = $this->jmdb->new_kanji($this_kanji, $this->version_id);
-                    if($this->log_merge_ops)
-                    {
-                        $logger->new_kanji($this_kanji, $this->version_id);
-                    }
+                    $this->logger->new_kanji($this_kanji, $this->version_id);
                 }
             }
 
             foreach($expired_readings as $expired_reading)
             {
                 $this->jmdb->remove_reading($expired_reading->reading_uid, $this->version_id);
-                if($this->log_merge_ops)
-                {
-                    $logger->expired_reading($expired_reading, $this->version_id);
-                }
+                $this->logger->expired_reading($expired_reading, $this->version_id);
             }
 
             foreach($this_entry->readings as $this_reading)
@@ -677,20 +673,14 @@ class JMDictParser extends JMDictParser
                 {
                     $this_reading->entry_uid = $this_entry_uid;
                     $this_reading->reading_uid = $this->jmdb->new_reading($this_reading, $this->version_id);
-                    if($this->log_merge_ops)
-                    {
-                        $logger->new_reading($this_reading, $this->version_id);
-                    }
+                    $this->logger->new_reading($this_reading, $this->version_id);
                 }
             }
 
             foreach($expired_senses as $expired_sense)
             {
                 $this->jmdb->remove_sense($expired_sense->sense_uid, $this->version_id);
-                if($this->log_merge_ops)
-                {
-                    $logger->expired_sense($expired_sense, $this->version_id);
-                }
+                $logger->expired_sense($expired_sense, $this->version_id);
             }
             unset($expired_senses);
 
@@ -700,10 +690,7 @@ class JMDictParser extends JMDictParser
                 {
                     $this_sense->entry_uid = $this_entry_uid;
                     $this_sense->reading_uid = $this->jmdb->new_sense($this_sense, $this->version_id);
-                    if($this->log_merge_ops)
-                    {
-                        $logger->new_sense($this_sense, $this->version_id);
-                    }
+                    $logger->new_sense($this_sense, $this->version_id);
                 }
             }
 
@@ -726,7 +713,7 @@ class JMDictParser extends JMDictParser
                             }
                         }
                         //if we get here that means the target kanji of a reading restriction was not found
-                        $this->processing_errors_collection->restr_target_not_found($this_entry, $this_reading);
+                        $this->logger->restr_target_not_found($this_entry, $this_reading);
                     }
                     unset($restr);
                     $this->jmdb->update_restrs($this_reading);
@@ -780,10 +767,7 @@ class JMDictParser extends JMDictParser
         foreach($this->entry_buffer as $entry)
         {
             $entry->entry_uid = $this->insert_new_entry($entry);
-            if($this->log_merge_ops)
-            {
-                $logger->new_entry($entry, $this->version_id);
-            }
+            $logger->new_entry($entry, $this->version_id);
         }
 
         $this->entry_buffer = array();
@@ -791,22 +775,19 @@ class JMDictParser extends JMDictParser
 
     protected function merge_entry()
     {
-        global $pdo, $mk_exceptions;
+        global $config;
 
         $this->entry->sequence_id = $this->entry->sequence_id;
         $this->entry_buffer[$this->entry->sequence_id] = $this->entry;
 
-        if(count($this->entry_buffer) > MERGE_BUFFER_SIZE)
+        if(count($this->entry_buffer) > $config['element_buffer_size'])
         {
             $this->write_merge_buffer();
         }
     }
 
-    //TODO some of the generic errors here should be processing errors
     protected function insert_new_entry($entry = null)
     {
-        global $mk_exceptions, $logger;
-
         if(empty($entry))
         {
             $entry = &$this->entry;
@@ -843,8 +824,7 @@ class JMDictParser extends JMDictParser
                             continue 2;
                         }
                     }
-                    //$mk_exceptions->generic_error("Could not find kanji element for reading restr element.");
-                    $this->processing_errors_collection->restr_target_not_found($entry, $reading);
+                    $this->logger->restr_target_not_found($entry, $reading);
                 }
                 unset($restr);
                 $this->jmdb->update_restrs($reading);
@@ -911,10 +891,8 @@ class JMDictParser extends JMDictParser
 
 
     //TODO the flushing opreations need to be buffered
-    public function finalize()
+    public function parser_pass_2()
     {
-        global $pdo, $mk_exceptions, $logger;
-
         //write any outstanding data to the db
         $this->jmdb->write_all_buffers();
 
@@ -938,43 +916,42 @@ class JMDictParser extends JMDictParser
         unset($xref);
 
         //insert reference types into db
-        $err_msg = "";
         foreach($reference_types as $reference_type)
         {
-            $values = mk_explode(self::REF_FIELD_DELIMETER, $reference_type['binary_raw']);
+            $values = Security::explode_safe(self::REF_FIELD_DELIMETER, $reference_type['binary_raw']);
 
             $reference_format = count($values);
             switch($reference_format)
             {
                 case 1:
                     //the reference is either a reading or kanji entry
-                    $results = $this->jmdb->k_or_r_search($err_msg, $this->version_id, trim((string)$values[0]), 0);
+                    $results = $this->jmdb->k_or_r_search($this->version_id, trim(strval($values[0])), 0);
                     break;
 
                 case 2:
                     if(is_numeric($values[1]))
                     {
                         //if the second value is a number, then the first value is either a reb or keb
-                        $results = $this->jmdb->k_or_r_search($err_msg, $this->version_id, trim((string)$values[0]), (int)trim($values[1]));
+                        $results = $this->jmdb->k_or_r_search($this->version_id, trim(strval($values[0])), intval(trim($values[1])));
                     }
                     else
                     {
                         //else the first value must be a keb and the second value a reb
-                        $results = $this->jmdb->k_and_r_search($err_msg, $this->version_id, trim((string)$values[0]), trim((string)$values[1]), 0);
+                        $results = $this->jmdb->k_and_r_search($this->version_id, trim(strval($values[0])), trim(strval($values[1])), 0);
                     }
                     break;
 
                 case 3:
                     if(!is_numeric($values[2]))
                     {
-                        $this->processing_errors_collection->invalid_reference_type("Invalid reference element. 3rd component is not a valid integer:\n", $reference_type);
+                        $this->logger->invalid_reference_type("Invalid reference element. 3rd component is not a valid integer:\n", $reference_type);
                         continue;
                     }
-                    $results = $this->jmdb->k_and_r_search($err_msg, $this->version_id, trim((string)$values[0]), trim((string)$values[1]), (int)trim($values[2]));
+                    $results = $this->jmdb->k_and_r_search($this->version_id, trim(strval($values[0])), trim(strval($values[1])), intval(trim($values[2])));
                     break;
 
                 default:
-                    $this->processing_errors_collection->invalid_reference_type("Invalid reference element format:\n", $reference_type);
+                    $this->logger->invalid_reference_type("Invalid reference element format:\n", $reference_type);
                     continue;
                     break;
             }
@@ -982,20 +959,19 @@ class JMDictParser extends JMDictParser
             switch($reference_type['ref_type'])
             {
                 case "ant":
-                    $insertion_point = TABLE_JMDICT_SENSE_ANTONYMS;
+                    $insertion_point = $config['table_ants'];
                     break;
 
                 case "xref":
-                    $insertion_point = TABLE_JMDICT_SENSE_XREFS;
+                    $insertion_point = $config['table_xrefs'];
                     break;
             }
 
             if(false === $results)
             {
                 //try the reference type again but with the raw string data, or in other words, assume now the self::REF_FIELD_DELIMETER character is part of the string data
-                if(false === $results = $this->jmdb->k_or_r_search($err_msg, $this->version_id, trim($reference_type['binary_raw']), 0))
+                if(false === $results = $this->jmdb->k_or_r_search($this->version_id, trim(strval($reference_type['binary_raw'])), 0))
                 {
-                    $this->processing_errors_collection->invalid_reference_type($err_msg, $reference_type);
                     continue;
                 }
             }
@@ -1004,54 +980,49 @@ class JMDictParser extends JMDictParser
         }
 
         $this->jmdb->write_all_buffers(true);
-
+        
         //TODO check for duplicate sequence ids
         if($this->version_id > 1)
         {
             $this->write_merge_buffer();
-            mk_rewind($this->tmp_file['handle']);
+            $this->tmp_file->rewind();
             $sequence_ids_full = array();
-            while(false !== $seq_ids_line = @fgets($this->tmp_file['handle']))
+            while(false !== $seq_ids_line = $this->tmp_file->fgets())
             {
                 $ids_values = trim($seq_ids_line);
-                $pdo->prepare("SELECT sequence_id, entry_uid FROM ".TABLE_JMDICT_ENTRIES." WHERE sequence_id NOT IN($ids_values) AND ".$pdo->version_check().";");
-                $pdo->bindValue(":version_removed_id", $this->version_id, PDO::PARAM_INT);
-                $pdo->bindValue(":version_added_id", $this->version_id, PDO::PARAM_INT);
-                $pdo->execute();
-                $results = $pdo->fetchAll(PDO::FETCH_ASSOC);
+                $this->db_conn->prepare("SELECT sequence_id, entry_uid FROM ".$config['table_entries']." WHERE sequence_id NOT IN($ids_values) AND ".$this->db_conn->version_check().";");
+                $this->db_conn->bindValue(":version_removed_id", $this->version_id, \PDO::PARAM_INT);
+                $this->db_conn->bindValue(":version_added_id", $this->version_id, \PDO::PARAM_INT);
+                $this->db_conn->execute();
+                $results = $this->db_conn->fetchAll(\PDO::FETCH_ASSOC);
 
                 foreach($results as $result)
                 {
-                    if($this->log_merge_ops)
-                    {
-                        $expired_entry = new JMDictEntry();
-                        $expired_entry->entry_uid = $result['entry_uid'];
-                        $expired_entry->sequence_id = $result['sequence_id'];
-                        $logger->expired_entry($expired_entry, $this->version_id);
-                    }
                     $this->jmdb->remove_entry($result['entry_uid'], $this->version_id);
+                    $expired_entry = new JMDictEntry();
+                    $expired_entry->entry_uid = $result['entry_uid'];
+                    $expired_entry->sequence_id = $result['sequence_id'];
+                    $logger->expired_entry($expired_entry, $this->version_id);
                 }
 
-                $sequence_ids_full = array_merge($sequence_ids_full, explode(",",$seq_ids_line));
+                $sequence_ids_full = array_merge($sequence_ids_full, Security::explode_safe(",",$seq_ids_line));
             }
 
             //TODO check sequence_ids for duplicates and then throw error
 
-            if(!feof($this->tmp_file['handle']))
+            if(!$this->tmp_file->feof())
             {
-                $mk_exceptions->generic_error("Unexepted loop read failure");
+                throw new FileIOFailureException("Unexepted loop read failure");
             }
         }
-        unlink($this->tmp_file['name']);
+        $this->tmp_file->unlink();
         $this->jmdb->update_uid_counter();
     }
 
     protected function write_sequence_ids_to_file()
     {
-        global $pdo;
-
-        $ids = implode(",", $this->sequence_ids);
-        mk_fwrite($this->tmp_file['handle'], $ids."\n");
+        $ids_flat = Security::flatten_array($this->sequence_ids);
+        $this->tmp_file->write("$ids_flat\n");
         $this->sequence_ids = array();
     }
 

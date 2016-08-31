@@ -122,14 +122,21 @@ class Importer
     protected function get_versioned_dictionary_parser()
     {
         $parser_class_name = "MKDict\\v{$this->dtd->dtd_version}\\XML\\JMDictParser";
+        $jmdb_clas_name = "MKDict\\v{$this->dtd->dtd_version}\\Database\\JMDictDB";
         $this->jmdict_file->rewind();
-        return new $parser_class_name($this->jmdict_file, $this->dtd, $this->db_conn, $this->logger);
+        return new $parser_class_name($this->jmdict_file, $this->dtd, new $jmdb_clas_name($this->db_conn), $this->logger);
     }
     
     protected function parse_dictionary()
     {
         $parser = $this->get_versioned_dictionary_parser();
         
+        //the parser passes are the actual parsing functions
+        $parser_passes = $parser->get_parser_passes();
+        foreach($parser_passes as $parser_pass)
+        {
+            //call_user_func(array($parser, "$parser_pass"));
+        }
     }
     
     //todo can use pdo's db to object mapper

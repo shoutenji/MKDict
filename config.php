@@ -73,6 +73,7 @@ $config = array_merge($config, array(
     'element_buffer_size' => 2048,
     'dtd_max_len' => pow(2,18),
     'string_max_byte_len' => 1024,
+    'int_array_max_size' => 2048,
     'jmdict_ref_field_delimiter' => "\xE3\x83\xBB", //・
 ));
 

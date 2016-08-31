@@ -5,7 +5,7 @@ namespace MKDict\XML;
 use MKDict\FileResource\FileResource;
 use MKDict\FileResource\TempFileResource;
 use MKDict\DTD\DTD;
-use MKDict\Database\DBConnection;
+use MKDict\Database\JMDictDB;
 use MKDict\Exception\StaticBindingFailure;
 use MKDict\Exception\LibXMLError;
 
@@ -22,9 +22,12 @@ abstract class JMDictParser
     protected $tmp_file;
     protected $entry, $reading, $kanji, $sense;
     
-    public abstract function finalize();
+    public function get_parser_passes()
+    {
+        return array("parser_pass_1");
+    }
     
-    public function __construct(FileResource $file, DTD $dtd, DBConnection $jmdb, Logger $logger)
+    public function __construct(FileResource $file, DTD $dtd, JMDictDB $jmdb, Logger $logger)
     {
         global $options;
         
@@ -117,7 +120,7 @@ abstract class JMDictParser
         return $data;
     }
     
-    final public function parse()
+    final public function parser_pass_1()
     {
         global $options;
         

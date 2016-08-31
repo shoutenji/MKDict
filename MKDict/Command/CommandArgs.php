@@ -54,10 +54,6 @@ class CommandArgs extends \ArrayObject
                         $this['parse_dictionary'] = true;
                         break;
 
-                    case "--finalize-only":
-                        $this['finalize_only'] = true;
-                        break;
-
                     case "--generate-utf-data":
                         $this['generate_utf_data'] = true;
                         break;

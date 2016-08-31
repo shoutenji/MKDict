@@ -4,6 +4,7 @@ namespace MKDict\Database;
 
 use MKDict\Database\Exception\DBConnectionError;
 use MKDict\Database\Exception\DBError;
+use MKDict\Security\Security;
 
 class DBConnection
 {
@@ -63,6 +64,13 @@ class DBConnection
     public function null_check($field)
     {
         return " $field IS NULL "; 
+    }
+    
+    //todo this function must yield save values for the sql's IN() statement
+    //todo try to break this function
+    public static function flatten_array(array $ary, string $type = "int")
+    {
+        return Security::flatten_array($ary, $type);
     }
 
     //TODO this is a sloppy way to implement a version check because it still requires a bindValue() call afterwords

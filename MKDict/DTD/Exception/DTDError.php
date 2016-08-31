@@ -8,7 +8,7 @@ class DTDError extends FatalException
 {
     public $msg;
     
-    public function __construct($msg)
+    public function __construct(string $msg)
     {
         $this->msg = $msg;
         parent::__construct(debug_backtrace());
