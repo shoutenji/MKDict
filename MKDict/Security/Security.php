@@ -14,7 +14,7 @@ class Security
         return substr($str, 0, 20);
     }
     
-    public static function flatten_array(array $ary, string $type, string $delimiter = ",")
+    public static function flatten_array(array $ary, string $type = "int", string $delimiter = ",")
     {
         array_walk($ary, function(&$value, $key) use ($type){
             settype($value, $type);

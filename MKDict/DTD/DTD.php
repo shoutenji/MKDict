@@ -9,9 +9,9 @@ use MKDict\DTD\DTDParser;
 
 class DTD implements Canonicalizable
 {
-    public $dtd_raw;
-    public $dtd_canonical;
-    public $dtd_version;
+    public $raw;
+    public $canonical;
+    public $version;
     public $dictionary_version;
     public $version_id;
     
@@ -39,6 +39,7 @@ class DTD implements Canonicalizable
     public function canonicalize()
     {
         $this->canonical = $this->dtd_parser->canonicalize();
+        $this->raw = $this->dtd_parser->get_raw();
         $this->document_name = $this->dtd_parser->get_document_name();
         $this->elements = $this->dtd_parser->get_elements();
         $this->atrributes = $this->dtd_parser->get_attributes();

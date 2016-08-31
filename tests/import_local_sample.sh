@@ -5,16 +5,18 @@ source ./common.sh
 THIS_DIR=`dirname $0`
 JMDICT_DIR=`readlink -e "$THIS_DIR/.."`
 
-GZ_XML_FILE_NAME=`readlink -e "$JMDICT_DIR/var/data/DD50996022F781D36_1472274168_sample.xml"`
+DATA_FILE_NAME="DD50996022F781D36_1472274168_sample"
+
+GZ_XML_FILE_NAME=`readlink -e "$JMDICT_DIR/var/data/$DATA_FILE_NAME.xml"`
 if [ -f "$GZ_XML_FILE_NAME" ]; then
-    gzip -c $GZ_XML_FILE_NAME > "$JMDICT_DIR/var/data/DD50996022F781D36_1472274168_sample.gz"
+    gzip -c $GZ_XML_FILE_NAME > "$JMDICT_DIR/var/data/$DATA_FILE_NAME.gz"
 fi
 
-GZ_FILE_NAME=`readlink -e "$JMDICT_DIR/var/data/DD50996022F781D36_1472274168_sample.gz"`
+GZ_FILE_NAME=`readlink -e "$JMDICT_DIR/var/data/$DATA_FILE_NAME.gz"`
 if [ -z "$GZ_FILE_NAME" ]; then
     die "GZ_FILE_NAME not set"
 fi
-SAMPLE_GZ_FILE="--sample-gz-file=$GZ_FILE_NAME"
+SAMPLE_GZ_FILE="--sample-gz-file=$DATA_FILE_NAME.gz"
 
 IMPORT_FILE="$JMDICT_DIR/import.php"
 

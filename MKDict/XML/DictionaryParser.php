@@ -5,19 +5,18 @@ namespace MKDict\XML;
 use MKDict\FileResource\FileResource;
 use MKDict\FileResource\TempFileResource;
 use MKDict\DTD\DTD;
-use MKDict\Database\JMDictDB;
+use MKDict\Database\JMDictDBInterface;
 use MKDict\Exception\StaticBindingFailure;
 use MKDict\Exception\LibXMLError;
+use MKDict\Logger\Logger;
 
-abstract class JMDictParser
+abstract class DictionaryParser
 {
     protected $file, $dtd, $check_doc_name;
     protected $jmdb;
     protected $logger;
-    
-    private $character_buffer, $longest_entity_name, $entity_regexp_pattern;
-    private $parser;
-    
+    protected $character_buffer, $longest_entity_name, $entity_regexp_pattern;
+    protected $parser;
     protected $sequence_ids;
     protected $tmp_file;
     protected $entry, $reading, $kanji, $sense;
@@ -27,7 +26,7 @@ abstract class JMDictParser
         return array("parser_pass_1");
     }
     
-    public function __construct(FileResource $file, DTD $dtd, JMDictDB $jmdb, Logger $logger)
+    public function __construct(FileResource $file, DTD $dtd, JMDictDBInterface $jmdb, Logger $logger)
     {
         global $options;
         
@@ -39,6 +38,7 @@ abstract class JMDictParser
         $this->jmdb = $jmdb;
         $this->file = $file;
         $this->dtd = $dtd;
+        $this->version_id = $this->dtd->version_id;
         $this->logger = $logger;
         $this->character_buffer = "";
         $this->tmp_file = new TempFileResource();
@@ -100,11 +100,11 @@ abstract class JMDictParser
     //TODO sanatize for SQL injection
     protected function validate_string($data, $can_be_empty = false)
     {
-        global $options;
+        global $config;
         
         $data = strval($data); 
         
-        if(strlen($data) > $options['string_max_byte_len'])
+        if(strlen($data) > $config['string_max_byte_len'])
         {
             $this->logger->invalid_string($data, $this->entry, "String exceeds maximum length.");
             return false;
@@ -122,13 +122,13 @@ abstract class JMDictParser
     
     final public function parser_pass_1()
     {
-        global $options;
+        global $config;
         
         $result = false;
         $in_cdata_section = false; //flag to indicate whether or not our position in the text stream resides in a cdata section
         while(!$this->file->feof())
         {
-            $next_line = $this->file->read($options['parser_stream_read_size']);
+            $next_line = $this->file->read($config['parser_stream_read_size']);
 
             //the only reason we must process this text stream beyond a simple piece-wise read is because we need to replace entities, and adding
             //further complication, the reading operations don't respect token boundaries

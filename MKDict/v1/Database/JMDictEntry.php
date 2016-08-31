@@ -3,8 +3,9 @@
 namespace MKDict\v1\Database;
 
 use MKDict\v1\Database\JMDictElementList;
+use MKDict\v1\Database\JMDictElement;
 
-class JMDictEntry
+class JMDictEntry extends JMDictElement
 {
     public $readings;
     public $kanjis;

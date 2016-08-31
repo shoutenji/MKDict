@@ -74,20 +74,20 @@ class Importer
         //first dtd ie first ever import
         if(false === $previous_dtd)
         {
-            $this->dtd->dtd_version = 1;
+            $this->dtd->version = 1;
             $this->dtd->dictionary_version = 1;
             $this->dtd->version_id = 1;
         }
         //new dtd
-        else if($previous_dtd && !$dtd->is_equl($previous_dtd))
+        else if($previous_dtd && !$this->dtd->is_equal($previous_dtd))
         {
-            $this->dtd->dtd_version = $previous_dtd->dtd_version + 1;
+            $this->dtd->version = $previous_dtd->version + 1;
             $this->dtd->dictionary_version = 1;
         }
         //same dtd, new dictionary release
         else
         {
-            $this->dtd->dtd_version = $previous_dtd->dtd_version;
+            $this->dtd->version = $previous_dtd->version;
             $this->dtd->dictionary_version = $previous_dtd->dictionary_version + 1;
         }
         
@@ -108,9 +108,9 @@ class Importer
         
         $this->db_conn->prepare("INSERT INTO ".$config['table_dict_version']." VALUES (:download_date, :dtd_raw, :dtd_canonical, :dtd_version, :dictionary_version, :version_id);");
         $this->db_conn->bindValue(':download_date', null, \PDO::PARAM_STR);
-        $this->db_conn->bindValue(':dtd_raw', $this->dtd->dtd_raw, \PDO::PARAM_STR);
-        $this->db_conn->bindValue(':dtd_canonical', $this->dtd->dtd_canonical, \PDO::PARAM_STR);
-        $this->db_conn->bindValue(':dtd_version', $this->dtd->dtd_version, \PDO::PARAM_INT);
+        $this->db_conn->bindValue(':dtd_raw', $this->dtd->raw, \PDO::PARAM_STR);
+        $this->db_conn->bindValue(':dtd_canonical', $this->dtd->canonical, \PDO::PARAM_STR);
+        $this->db_conn->bindValue(':dtd_version', $this->dtd->version, \PDO::PARAM_INT);
         $this->db_conn->bindValue(':dictionary_version', $this->dtd->dictionary_version, \PDO::PARAM_INT);
         $this->db_conn->bindValue(':version_id', null, \PDO::PARAM_INT);
 
@@ -121,10 +121,10 @@ class Importer
     
     protected function get_versioned_dictionary_parser()
     {
-        $parser_class_name = "MKDict\\v{$this->dtd->dtd_version}\\XML\\JMDictParser";
-        $jmdb_clas_name = "MKDict\\v{$this->dtd->dtd_version}\\Database\\JMDictDB";
+        $parser_class_name = "MKDict\\v{$this->dtd->version}\\XML\\JMDictParser";
+        $jmdb_clas_name = "MKDict\\v{$this->dtd->version}\\Database\\JMDictDB";
         $this->jmdict_file->rewind();
-        return new $parser_class_name($this->jmdict_file, $this->dtd, new $jmdb_clas_name($this->db_conn), $this->logger);
+        return new $parser_class_name($this->jmdict_file, $this->dtd, new $jmdb_clas_name($this->db_conn, $this->dtd->version_id, $this->logger), $this->logger);
     }
     
     protected function parse_dictionary()
@@ -135,7 +135,7 @@ class Importer
         $parser_passes = $parser->get_parser_passes();
         foreach($parser_passes as $parser_pass)
         {
-            //call_user_func(array($parser, "$parser_pass"));
+            call_user_func(array($parser, "$parser_pass"));
         }
     }
     
@@ -154,10 +154,10 @@ class Importer
         else
         {
             $dtd = new DTD();
-            $dtd->version_id = (int) $dtd_results['version_id'];
-            $dtd->dtd_canonical = (int) $dtd_results['dtd_canonical'];
-            $dtd->dtd_version = (int) $dtd_results['dtd_version'];
-            $dtd->dictionary_version = (int) $dtd_results['dictionary_version'];
+            $dtd->version_id = intval($dtd_results['version_id']);
+            $dtd->dtd_canonical = intval($dtd_results['dtd_canonical']);
+            $dtd->dtd_version = intval($dtd_results['dtd_version']);
+            $dtd->dictionary_version = intval($dtd_results['dictionary_version']);
             $dtd->dtd_raw = $dtd_results['dtd_raw'];
             return $dtd;
         }
@@ -340,7 +340,7 @@ class Importer
         {
             $jmdict_local_filename = $options['gz_file'];
         }
-
+        
         $jmdict_sample_gz_finfo = new FileInfo($jmdict_local_filename, $config['data_dir']);
         $jmdict_sample_gz_finfo->set_mode("rb");
         $this->jmdict_file = new GZFileResource($jmdict_sample_gz_finfo);

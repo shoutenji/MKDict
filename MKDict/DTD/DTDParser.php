@@ -11,6 +11,7 @@ class DTDParser
     private $elements;
     private $attributes;
     private $entities;
+    private $raw;
     
     protected $file;
     
@@ -37,6 +38,11 @@ class DTDParser
     public function get_entities()
     {
         return $this->entities;
+    }
+    
+    public function get_raw()
+    {
+        return $this->raw;
     }
     
    public function canonicalize()
@@ -161,7 +167,7 @@ class DTDParser
         {
             throw new DTDError("DTD exceeds maximum length.\nDTD RAW:\n$dtd_raw");
         }
-        $dtd['dtd_raw'] = $dtd_raw;
+        $dtd['raw'] = $dtd_raw;
         
         //now remove various unwanted parts of the dtd if they are present
         //remove PI's
@@ -347,6 +353,7 @@ class DTDParser
         
         usort($entities, array($this,"usort_by_column_name"));
         
+        $this->raw = $dtd['raw'];
         $this->document_name = $document_name;
         $this->elements = $elements;
         $this->attributes = $attributes;

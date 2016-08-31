@@ -2,7 +2,7 @@
 
 namespace MKDict\v1\Database;
 
-class JMDictElementList extends ArrayObject
+class JMDictElementList extends \ArrayObject
 {
     
 }

@@ -5,8 +5,10 @@ namespace MKDict\v1\XML;
 use MKDict\DTD\Exception\DTDError;
 use MKDict\Unicode\Unicode;
 use MKDict\FileResource\Exception\FileIOFailureException;
+use MKDict\XML\DictionaryParser;
+use MKDict\Security\Security;
+use MKDict\Database\DBConnection;
 
-use MKDict\v1\XML\JMDictParser;
 use MKDict\v1\Database\JMDictDB;
 use MKDict\v1\Database\JMDictEntry;
 use MKDict\v1\Database\JMDictKanjiElement;
@@ -14,7 +16,7 @@ use MKDict\v1\Database\JMDictReadingElement;
 use MKDict\v1\Database\JMDictSenseElement;
 use MKDict\v1\Database\JMDictStringElement;
 
-class JMDictParser extends JMDictParser
+class JMDictParser extends DictionaryParser
 {
     protected static $ENTITY_ID = 'd73ilHD34h8dyq';
     
@@ -68,7 +70,7 @@ class JMDictParser extends JMDictParser
         //check that first element is the document root, then skip it
         if($this->check_doc_name)
         {
-            if($name !== $this->dtd['document_name'])
+            if($name !== $this->dtd->document_name)
             {
                 throw new DTDError("Document name missing");
             }
@@ -76,7 +78,7 @@ class JMDictParser extends JMDictParser
         }
         $this->check_doc_name = false;
 
-        if(!isset($this->dtd['elements'][$name]))
+        if(!isset($this->dtd->elements[$name]))
         {
            throw new DTDError("Unrecognized element name: $name");
         }
@@ -103,12 +105,15 @@ class JMDictParser extends JMDictParser
                     break;
 
                 case self::ELEMENT_JMDOCUMENT:
+                case self::ELEMENT_ENTRY_SEQUENCE:
                 case self::ELEMENT_READING_NOKANJI:
                 case self::ELEMENT_READING_RESTRICTION:
                 case self::ELEMENT_READING_INFO:
                 case self::ELEMENT_READING_PRI:
+                case self::ELEMENT_READING_BINARY:
                 case self::ELEMENT_KANJI_INFO:
                 case self::ELEMENT_KANJI_PRI:
+                case self::ELEMENT_KANJI_BINARY:
                 case self::ELEMENT_SENSE_GLOSS:
                 case self::ELEMENT_POS:
                 case self::ELEMENT_SENSE_FIELD:
@@ -288,22 +293,22 @@ class JMDictParser extends JMDictParser
 
     protected function set_binary_fields(JMDictStringElement &$element)
     {
-        $binary_nfc = Unicode::normalize_text($element->binary_raw, UTF_NORMALIZE_NFC, self::$ENTITY_ID);
+        $binary_nfc = Unicode::normalize_text($element->binary_raw, Unicode::UTF_NORMALIZE_NFC, self::$ENTITY_ID);
         $element->binary_nfc = $element->binary_raw === $binary_nfc ? null : $binary_nfc;
 
-        $binary_nfd = Unicode::normalize_text($element->binary_raw, UTF_NORMALIZE_NFD, self::$ENTITY_ID);
+        $binary_nfd = Unicode::normalize_text($element->binary_raw, Unicode::UTF_NORMALIZE_NFD, self::$ENTITY_ID);
         $element->binary_nfd = $element->binary_raw === $binary_nfd ? null : $binary_nfd;
 
-        $binary_nfkc = Unicode::normalize_text($element->binary_raw, UTF_NORMALIZE_NFKC, self::$ENTITY_ID);
+        $binary_nfkc = Unicode::normalize_text($element->binary_raw, Unicode::UTF_NORMALIZE_NFKC, self::$ENTITY_ID);
         $element->binary_nfkc = $element->binary_raw === $binary_nfkc ? null : $binary_nfkc;
 
-        $binary_nfkd = Unicode::normalize_text($element->binary_raw, UTF_NORMALIZE_NFKD, self::$ENTITY_ID);
+        $binary_nfkd = Unicode::normalize_text($element->binary_raw, Unicode::UTF_NORMALIZE_NFKD, self::$ENTITY_ID);
         $element->binary_nfkd = $element->binary_raw === $binary_nfkd ? null : $binary_nfkd;
 
-        $binary_nfd_casefolded = Unicode::normalize_text($element->binary_raw, UTF_NORMALIZE_NFD_CASEFOLD, self::$ENTITY_ID);
+        $binary_nfd_casefolded = Unicode::normalize_text($element->binary_raw, Unicode::UTF_NORMALIZE_NFD_CASEFOLD, self::$ENTITY_ID);
         $element->binary_nfd_casefolded = $element->binary_raw === $binary_nfd_casefolded ? null : $binary_nfd_casefolded;
 
-        $binary_nfkd_casefolded = Unicode::normalize_text($element->binary_raw, UTF_NORMALIZE_NFKD_CASEFOLD, self::$ENTITY_ID);
+        $binary_nfkd_casefolded = Unicode::normalize_text($element->binary_raw, Unicode::UTF_NORMALIZE_NFKD_CASEFOLD, self::$ENTITY_ID);
         $element->binary_nfkd_casefolded = $element->binary_raw === $binary_nfkd_casefolded ? null : $binary_nfkd_casefolded;
     }
 
@@ -792,7 +797,7 @@ class JMDictParser extends JMDictParser
         {
             $entry = &$this->entry;
         }
-
+        
         $entry->entry_uid = $this->jmdb->new_entry($this->entry, $this->version_id);
 
         //insert kanjis

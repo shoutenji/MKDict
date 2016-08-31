@@ -2,7 +2,7 @@
 
 namespace MKDict\v1\Database;
 
-use MKDict\Database\JMDictDataBase;
+use MKDict\Database\JMDictDBInterface;
 use MKDict\Database\DBConnection;
 use MKDict\Database\DBError;
 use MKDict\Logger\Logger;
@@ -37,6 +37,8 @@ class JMDictDB implements JMDictDBInterface
     
     public function __construct(DBConnection $db_conn, int $version_id, Logger $logger)
     {
+        global $config;
+        
         $this->db_conn = $db_conn;
         $this->version_id = $version_id;
         $this->logger = $logger;
@@ -110,7 +112,7 @@ class JMDictDB implements JMDictDBInterface
 
         $value = $this->get_uid(false);
         $this->db_conn->prepare("UPDATE ".$config['table_meta']." SET value=:uid_counter WHERE key_value='uid_counter';");
-        $this->db_conn->bindValue(":uid_counter", stval($value), \PDO::PARAM_STR);
+        $this->db_conn->bindValue(":uid_counter", strval($value), \PDO::PARAM_STR);
         $this->db_conn->execute();
     }
 

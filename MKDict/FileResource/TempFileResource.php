@@ -18,11 +18,6 @@ class TempFileResource extends PlainTextFileResource
         }
         while(@file_exists("$config[tmp_dir]/$filename"));
         
-        parent::__construct(new FileInfo($filename, $config['tmp_dir'], null, null, "w+"));
-    }
-    
-    public function unlink()
-    {
-        
+        parent::__construct(new FileInfo($filename, $config['tmp_dir'], null, array(), "w+"));
     }
 }

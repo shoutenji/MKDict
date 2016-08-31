@@ -2,22 +2,22 @@
 
 #This script should only by run in a terminal window
 #TODO need a window message here
-if ! [ -t 1 ]; then
-    TITLE="MKdict error"
-    MSG="This script cannot be run outside a terminal context."
-    if [ -n `which zenity` ]; then
-        zenity --error --title="" --text="$MSG"
-    elif [ -n `which kdialog` ]; then
-        kdialog --error --title "$TITLE" "$MSG"
-    elif [ -n `which xmessage` ]; then
-        xmessage -center "ERROR: $TITLE: $MSG"
-    elif [ -n `which notify-send` ]; then
-        notify-send "ERROR: $TITLE: $MSG"
-    else
-        echo "$TITLE:\n$1"
-    fi
-    exit 1
-fi
+# if ! [ -t 1 ]; then
+#     TITLE="MKdict error"
+#     MSG="This script cannot be run outside a terminal context."
+#     if [ -n `which zenity` ]; then
+#         zenity --error --title="" --text="$MSG"
+#     elif [ -n `which kdialog` ]; then
+#         kdialog --error --title "$TITLE" "$MSG"
+#     elif [ -n `which xmessage` ]; then
+#         xmessage -center "ERROR: $TITLE: $MSG"
+#     elif [ -n `which notify-send` ]; then
+#         notify-send "ERROR: $TITLE: $MSG"
+#     else
+#         echo "$TITLE:\n$1"
+#     fi
+#     exit 1
+# fi
 
 die()
 {

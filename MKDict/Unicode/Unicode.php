@@ -619,6 +619,8 @@ class Unicode
      */
     public static function casefold($text)
     {
+        global $config;
+        
         require_once "$config[data_dir]/$config[case_mapping_f]";
         
         return strtr($text, $GLOBALS['case_map']);
@@ -639,7 +641,7 @@ class Unicode
      */
     public static function nfd_casefold($text)
     {
-        return self::nfd(self::casefold(nfd($text)));
+        return self::nfd(self::casefold(self::nfd($text)));
     }
     
     /**
@@ -733,7 +735,7 @@ class Unicode
      */
     private static function nfkc($text)
     {
-        return self::utf8_recompose(utf8_decompose($text, self::UNICODE_DECOMPOSITION_COMPATIBILITY), self::UNICODE_DECOMPOSITION_COMPATIBILITY);
+        return self::utf8_recompose(self::utf8_decompose($text, self::UNICODE_DECOMPOSITION_COMPATIBILITY), self::UNICODE_DECOMPOSITION_COMPATIBILITY);
     }
     
     /**
