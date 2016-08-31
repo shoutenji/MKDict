@@ -6,6 +6,7 @@ use MKDict\Database\JMDictDBInterface;
 use MKDict\Database\DBConnection;
 use MKDict\Database\DBError;
 use MKDict\Logger\Logger;
+use MKDict\Security\Security;
 
 class JMDictDB implements JMDictDBInterface
 {
@@ -44,27 +45,27 @@ class JMDictDB implements JMDictDBInterface
         $this->logger = $logger;
         $this->uid_counter = 0;
         
-        $entry_buffer = array();
-        $kanji_buffer = array();
-        $kanji_info_buffer = array();
-        $kanji_pri_buffer = array();
-        $reading_buffer = array();
-        $sense_buffer = array();
-        $reading_info_buffer = array();
-        $reading_pri_buffer = array();
-        $reading_restr_buffer = array();
-        $gloss_buffer = array();
-        $dial_buffer = array();
-        $pos_buffer = array();
-        $field_buffer = array();
-        $misc_buffer = array();
-        $sense_info_buffer = array();
-        $sense_lsources_buffer = array();
-        $sense_ants_buffer = array();
-        $sense_xrefs_buffer = array();
-        $stagrs_buffer = array();
-        $stagks_buffer = array();
-        $reference_type_buffer = array(
+        $this->entry_buffer = array();
+        $this->kanji_buffer = array();
+        $this->kanji_info_buffer = array();
+        $this->kanji_pri_buffer = array();
+        $this->reading_buffer = array();
+        $this->sense_buffer = array();
+        $this->reading_info_buffer = array();
+        $this->reading_pri_buffer = array();
+        $this->reading_restr_buffer = array();
+        $this->gloss_buffer = array();
+        $this->dial_buffer = array();
+        $this->pos_buffer = array();
+        $this->field_buffer = array();
+        $this->misc_buffer = array();
+        $this->sense_info_buffer = array();
+        $this->sense_lsources_buffer = array();
+        $this->sense_ants_buffer = array();
+        $this->sense_xrefs_buffer = array();
+        $this->stagrs_buffer = array();
+        $this->stagks_buffer = array();
+        $this->reference_type_buffer = array(
             $config['table_ants'] => array(),
             $config['table_xrefs'] => array()
         );

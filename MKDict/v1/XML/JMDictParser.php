@@ -858,7 +858,6 @@ class JMDictParser extends DictionaryParser
                             continue 2;
                         }
                     }
-                    //$mk_exceptions->generic_error("Could not find reading element for sense restriction element.");
                     $this->processing_errors_collection->stagr_target_not_found($entry, $sense);
                 }
                 unset($stagr);
@@ -878,7 +877,6 @@ class JMDictParser extends DictionaryParser
                             continue 2;
                         }
                     }
-                    //$mk_exceptions->generic_error("Could not find kanji element for sense restriction element.");
                     $this->processing_errors_collection->stagk_target_not_found($entry, $sense);
                 }
                 unset($stagk);
@@ -898,6 +896,8 @@ class JMDictParser extends DictionaryParser
     //TODO the flushing opreations need to be buffered
     public function parser_pass_2()
     {
+        global $config;
+        
         //write any outstanding data to the db
         $this->jmdb->write_all_buffers();
 
@@ -923,7 +923,7 @@ class JMDictParser extends DictionaryParser
         //insert reference types into db
         foreach($reference_types as $reference_type)
         {
-            $values = Security::explode_safe(self::REF_FIELD_DELIMETER, $reference_type['binary_raw']);
+            $values = Security::explode_safe($config['jmdict_ref_field_delimiter'], $reference_type['binary_raw']);
 
             $reference_format = count($values);
             switch($reference_format)

@@ -108,7 +108,17 @@ class ImportLogger extends Logger
         
     }
     
-    public function invalid_reference_type($msg = "")
+    public function invalid_reference_type($msg = "", array $reference_type)
+    {
+        
+    }
+    
+    public function k_and_r_search_failure(array $args)
+    {
+        
+    }
+    
+    public function k_or_r_search_failure(array $args)
     {
         
     }

@@ -60,18 +60,18 @@ class Security
         }
     }
     
-    public static function explode_safe($delimeter, $ary, $type = "int", $strip_empty_values = true)
+    public static function explode_safe($delimeter, $strvalues, $type = "int", $strip_empty_values = true)
     {
-        array_walk($ary, function(&$value, $key) use ($type){
-            settype($value, $type);
-        });
-        
-        $values = explode($delimeter, $ary);
+        $values = explode($delimeter, $strvalues);
         
         if($strip_empty_values)
         {
             self::remove_empty_array_values($values);
         }
+        
+        array_walk($values, function(&$value, $key) use ($type){
+            settype($value, $type);
+        });
         
         return $values;
     }
