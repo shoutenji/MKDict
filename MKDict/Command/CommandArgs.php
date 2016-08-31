@@ -28,7 +28,7 @@ class CommandArgs extends \ArrayObject
             else if(preg_match("/--export-version=(\d+)/ixsm", $arg))
             {
                 $arg_tokens = explode("=", $arg);
-                $this["export_version"] = trim($arg_tokens[1]);
+                $this["export_version"] = intval(trim($arg_tokens[1]));
             }
             else
             {

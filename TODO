@@ -2,3 +2,4 @@
 2)search for $mk_exceptions and $pdo and delete them
 3)make changes to fileinfo class, see comments
 4)mysql transactions that are cancelled do not reverse changes in the auto_increment value
+5)fill out jmdbinterface interface

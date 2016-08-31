@@ -8,6 +8,7 @@ use MKDict\Database\DBError;
 use MKDict\Logger\Logger;
 use MKDict\Security\Security;
 
+//todo make all version_id args optional, use $this->version id by default
 class JMDictDB implements JMDictDBInterface
 {
     protected $db_conn;
@@ -36,7 +37,7 @@ class JMDictDB implements JMDictDBInterface
     protected $stagrs_buffer;
     protected $stagks_buffer;
     
-    public function __construct(DBConnection $db_conn, int $version_id, Logger $logger)
+    public function __construct(DBConnection $db_conn, int $version_id, Logger $logger = null)
     {
         global $config;
         
@@ -1552,19 +1553,88 @@ class JMDictDB implements JMDictDBInterface
         return $this->db_conn->fetchAll(\PDO::FETCH_ASSOC | \PDO::FETCH_GROUP);
     }
 
-    public function get_sense_resolved_ants($sense_uids_flat)
-    {
-        global $config;
-
-        $this->db_conn->query("SELECT SA.sense_uid, SA.binary_raw, SA.t_sense_uid, SA.t_kanji_uid, K.binary_raw AS t_kanji_binary_raw, SA.t_reading_uid, R.binary_raw AS t_reading_binary_raw, G.binary_raw AS t_sense_binary_raw FROM ".$config['table_ants']." AS SA JOIN ".$config['table_kanjis']." AS K ON SA.t_kanji_uid=K.kanji_uid JOIN ".$config['table_readings']." AS R ON SA.t_reading_uid=R.reading_uid JOIN (SELECT sense_uid, binary_raw FROM ".$config['table_glosses'].") AS G ON SA.t_sense_uid=G.sense_uid WHERE SA.sense_uid IN($sense_uids_flat) ORDER BY SA.sense_uid;");
-        return $this->db_conn->fetchAll(\PDO::FETCH_ASSOC | \PDO::FETCH_GROUP);
-    }
-
+    //todo this query needs to be sped up
     public function get_sense_resolved_xrefs($sense_uids_flat)
     {
         global $config;
 
-        $this->db_conn->query("SELECT SX.sense_uid, SX.binary_raw, SX.t_sense_uid, SX.t_kanji_uid, K.binary_raw AS t_kanji_binary_raw, SX.t_reading_uid, R.binary_raw AS t_reading_binary_raw, G.binary_raw AS t_sense_binary_raw FROM ".$config['table_xrefs']." AS SX JOIN ".$config['table_kanjis']." AS K ON SX.t_kanji_uid=K.kanji_uid JOIN ".$config['table_readings']." AS R ON SX.t_reading_uid=R.reading_uid JOIN (SELECT sense_uid, binary_raw FROM ".$config['table_glosses'].") AS G ON SX.t_sense_uid=G.sense_uid WHERE SX.sense_uid IN($sense_uids_flat) ORDER BY SX.sense_uid;");
-        return $this->db_conn->fetchAll(\PDO::FETCH_ASSOC | \PDO::FETCH_GROUP);
+        //$this->db_conn->query("SELECT SA.sense_uid, SA.binary_raw, SA.t_sense_uid, SA.t_kanji_uid, K.binary_raw AS t_kanji_binary_raw, SA.t_reading_uid, R.binary_raw AS t_reading_binary_raw, G.binary_raw AS t_sense_binary_raw FROM ".$config['table_ants']." AS SA JOIN ".$config['table_kanjis']." AS K ON SA.t_kanji_uid=K.kanji_uid JOIN ".$config['table_readings']." AS R ON SA.t_reading_uid=R.reading_uid JOIN (SELECT sense_uid, binary_raw FROM ".$config['table_glosses'].") AS G ON SA.t_sense_uid=G.sense_uid WHERE SA.sense_uid IN($sense_uids_flat) ORDER BY SA.sense_uid;");
+        $this->db_conn->query("SELECT * FROM ".$config['table_xrefs']." WHERE sense_uid IN($sense_uids_flat);");
+        $xrefs_grouped = $this->db_conn->fetchAll(\PDO::FETCH_ASSOC | \PDO::FETCH_GROUP);
+        foreach($xrefs_grouped as $sense_uid_key => &$xrefs)
+        {
+            foreach($xrefs as &$xref)
+            {
+                if(!empty($xref['t_kanji_uid']))
+                {
+                    $this->db_conn->prepare("SELECT kanji_uid, binary_raw FROM ".$config['table_kanjis']." WHERE kanji_uid=:kanji_uid ORDER BY kanji_uid;");
+                    $this->db_conn->bindValue(":kanji_uid", $xref['t_kanji_uid'], \PDO::PARAM_INT);
+                    $this->db_conn->execute();
+                    $xref['t_kanji_binary_raw'] = $this->db_conn->fetch(\PDO::FETCH_ASSOC)['binary_raw'];
+                }
+
+                if(!empty($xref['t_reading_uid']))
+                {
+                    $this->db_conn->prepare("SELECT reading_uid, binary_raw FROM ".$config['table_readings']." WHERE reading_uid=:reading_uid ORDER BY reading_uid;");
+                    $this->db_conn->bindValue(":reading_uid", $xref['t_reading_uid'], \PDO::PARAM_INT);
+                    $this->db_conn->execute();
+                    $xref['t_reading_binary_raw'] = $this->db_conn->fetch(\PDO::FETCH_ASSOC)['binary_raw'];
+                }
+
+                if(!empty($xref['t_sense_uid']))
+                {
+                    $this->db_conn->prepare("SELECT binary_raw FROM ".$config['table_glosses']." WHERE sense_uid=:sense_uid ORDER BY sense_uid LIMIT 1;");
+                    $this->db_conn->bindValue(":sense_uid", $xref['t_sense_uid'], \PDO::PARAM_INT);
+                    $this->db_conn->execute();
+                    $xref['t_sense_binary_raw'] = $this->db_conn->fetch(\PDO::FETCH_ASSOC)['binary_raw'];
+                }
+            }
+            unset($xref);
+        }
+        unset($xrefs);
+        
+        return $xrefs_grouped;
+    }
+
+    public function get_sense_resolved_ants($sense_uids_flat)
+    {
+        global $config;
+
+        //$this->db_conn->query("SELECT SX.sense_uid, SX.binary_raw, SX.t_sense_uid, SX.t_kanji_uid, K.binary_raw AS t_kanji_binary_raw, SX.t_reading_uid, R.binary_raw AS t_reading_binary_raw, G.binary_raw AS t_sense_binary_raw FROM ".$config['table_xrefs']." AS SX JOIN ".$config['table_kanjis']." AS K ON SX.t_kanji_uid=K.kanji_uid JOIN ".$config['table_readings']." AS R ON SX.t_reading_uid=R.reading_uid JOIN (SELECT sense_uid, binary_raw FROM ".$config['table_glosses'].") AS G ON SX.t_sense_uid=G.sense_uid WHERE SX.sense_uid IN($sense_uids_flat) ORDER BY SX.sense_uid;");
+        $this->db_conn->query("SELECT * FROM ".$config['table_ants']." WHERE sense_uid IN($sense_uids_flat);");
+        $ants_grouped = $this->db_conn->fetchAll(\PDO::FETCH_ASSOC | \PDO::FETCH_GROUP);
+        foreach($ants_grouped as $sense_uid_key => &$ants)
+        {
+            foreach($ants as &$ant)
+            {
+                if(!empty($ant['t_kanji_uid']))
+                {
+                    $this->db_conn->prepare("SELECT kanji_uid, binary_raw FROM ".$config['table_kanjis']." WHERE kanji_uid=:kanji_uid ORDER BY kanji_uid;");
+                    $this->db_conn->bindValue(":kanji_uid", $ant['t_kanji_uid'], \PDO::PARAM_INT);
+                    $this->db_conn->execute();
+                    $ant['t_kanji_binary_raw'] = $this->db_conn->fetch(\PDO::FETCH_ASSOC)['binary_raw'];
+                }
+
+                if(!empty($ant['t_reading_uid']))
+                {
+                    $this->db_conn->prepare("SELECT reading_uid, binary_raw FROM ".$config['table_readings']." WHERE reading_uid=:reading_uid ORDER BY reading_uid;");
+                    $this->db_conn->bindValue(":reading_uid", $ant['t_reading_uid'], \PDO::PARAM_INT);
+                    $this->db_conn->execute();
+                    $ant['t_reading_binary_raw'] = $this->db_conn->fetch(\PDO::FETCH_ASSOC)['binary_raw'];
+                }
+
+                if(!empty($ant['t_sense_uid']))
+                {
+                    $this->db_conn->prepare("SELECT binary_raw FROM ".$config['table_glosses']." WHERE sense_uid=:sense_uid ORDER BY sense_uid LIMIT 1;");
+                    $this->db_conn->bindValue(":sense_uid", $ant['t_sense_uid'], \PDO::PARAM_INT);
+                    $this->db_conn->execute();
+                    $ant['t_sense_binary_raw'] = $this->db_conn->fetch(\PDO::FETCH_ASSOC)['binary_raw'];
+                }
+            }
+            unset($ant);
+        }
+        unset($ants);
+        
+        return $ants_grouped;
     }
 }

@@ -923,8 +923,8 @@ class JMDictParser extends DictionaryParser
         //insert reference types into db
         foreach($reference_types as $reference_type)
         {
-            $values = Security::explode_safe($config['jmdict_ref_field_delimiter'], $reference_type['binary_raw']);
-
+            $values = Security::explode_safe($config['jmdict_ref_field_delimiter'], $reference_type['binary_raw'], "string");
+            
             $reference_format = count($values);
             switch($reference_format)
             {

@@ -75,6 +75,7 @@ $config = array_merge($config, array(
     'string_max_byte_len' => 1024,
     'int_array_max_size' => 2048,
     'jmdict_ref_field_delimiter' => "\xE3\x83\xBB", //・
+    'export_block_size' => 500,
 ));
 
 /*
@@ -87,6 +88,7 @@ $config = array_merge($config, array(
     'data_dir' => __DIR__ . '/var/data',
     'tmp_dir' => __DIR__ . '/var/tmp',
     'log_dir' => __DIR__ . '/var/logs',
+    'export_dir' => __DIR__ . '/var/exports',
 ));
 
 //Unicode 7.0
