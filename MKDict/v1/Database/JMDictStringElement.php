@@ -3,18 +3,21 @@
 namespace MKDict\v1\Database;
 
 use MKDict\v1\Database\JMDictElement;
+use MKDict\v1\Database\JMDictElementList;
 use MKDict\v1\Database\Comparable;
 
 class JMDictStringElement extends JMDictElement implements Comparable
 {
     public $binary_raw;
     public $binary_nfc, $binary_nfkc, $binary_nfd, $binary_nfkd, $binary_nfd_casefolded, $binary_nfkd_casefolded;
-    public $infos = array();
-    public $pris = array();
+    public $infos;
+    public $pris;
     
     public function __construct(string $binary = "")
     {
         $this->binary_raw = $binary;
+        $this->infos = new JMDictElementList();
+        $this->pris = new JMDictElementList();
         parent::__construct();
     }
     

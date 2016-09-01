@@ -16,8 +16,8 @@ class LogFileResource extends PlainTextFileResource
         {
             $filename = Security::weak_random_string();
         }
-        while(@file_exists("$config[log_dir]/$filename"));
+        while(@file_exists("$config[log_dir]/$filename.log"));
         
-        parent::__construct(new FileInfo($filename, $config['log_dir'], null, array(), "w+"));
+        parent::__construct(new FileInfo("$filename.log", $config['log_dir'], null, array(), "w+"));
     }
 }

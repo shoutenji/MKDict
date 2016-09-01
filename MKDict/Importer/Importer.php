@@ -95,11 +95,24 @@ class Importer
         {
             $this->version_dictionary();
         }
+        else
+        {
+            $this->dtd->version_id = $this->get_last_dictionary_version();
+        }
+        
+        $this->logger->set_version_id($this->dtd->version_id);
         
         if($options['parse_dictionary'])
         {
             $this->parse_dictionary();
         }
+    }
+    
+    protected function get_last_dictionary_version()
+    {
+        $this->db_conn->execute();
+        $this->db_conn->query("SELECT LAST_INSERT_ID() AS version_id;");
+        return $this->db_conn->fetch(\PDO::FETCH_ASSOC)['version_id'];
     }
     
     protected function version_dictionary()
@@ -137,6 +150,9 @@ class Importer
         {
             call_user_func(array($parser, "$parser_pass"));
         }
+        
+        //finally write the log file
+        $this->logger->flush();
     }
     
     //todo can use pdo's db to object mapper

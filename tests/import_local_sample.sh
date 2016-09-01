@@ -28,7 +28,8 @@ IMPORT_OPTIONS=" --
                 $VERSION_DICTIONARY
                 $DEBUG_VERSION
                 $VALIDATE_CRC
-                $VALIDATE_UTF8"
+                $VALIDATE_UTF8
+                $WITH_ROLLBACK"
                 
 IMPORT_RESULT=`"$PHP" -f "$IMPORT_FILE" $IMPORT_OPTIONS`
 

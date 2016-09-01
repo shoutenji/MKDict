@@ -3,12 +3,18 @@
 namespace MKDict\v1\Database;
 
 use MKDict\v1\Database\JMDictStringElement;
+use MKDict\v1\Database\JMDictElementList;
 use MKDict\v1\Database\Comparable;
 
 class JMDictReadingElement extends JMDictStringElement implements Comparable
 {
     public $b_no_kanji = 0;  //keep this as an int
-    public $restrs = array();
+    public $restrs;
+    
+    public function __construct()
+    {
+        $this->restrs = new JMDictElementList();
+    }
     
     public static function is_equal(Comparable $reading1, Comparable $reading2)
     {

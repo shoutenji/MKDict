@@ -2,23 +2,40 @@
 
 namespace MKDict\v1\Database;
 
-use MKDict\v1\Database\JMDictStringElement;
+use MKDict\v1\Database\JMDictElementList;
 use MKDict\v1\Database\Comparable;
 
 class JMDictSenseElement extends JMDictElement implements Comparable
 {
-    public $glosses = array();
-    public $poses = array();
-    public $fields = array();
-    public $miscs = array();
-    public $stagrs = array();
-    public $stagks = array();
-    public $xrefs = array();
-    public $ants = array();
-    public $infos = array();
-    public $lsources = array();
-    public $dials = array();
-    public $sense_index = 0;
+    public $glosses;
+    public $poses;
+    public $fields;
+    public $miscs;
+    public $stagrs;
+    public $stagks;
+    public $xrefs;
+    public $ants;
+    public $infos;
+    public $lsources;
+    public $dials;
+    public $sense_index;
+    
+    public function __construct()
+    {
+        $this->restrs = new JMDictElementList();
+        $this->glosses = new JMDictElementList();
+        $this->poses = new JMDictElementList();
+        $this->fields = new JMDictElementList();
+        $this->miscs = new JMDictElementList();
+        $this->stagrs = new JMDictElementList();
+        $this->stagks = new JMDictElementList();
+        $this->xrefs = new JMDictElementList();
+        $this->ants = new JMDictElementList();
+        $this->infos = new JMDictElementList();
+        $this->lsources = new JMDictElementList();
+        $this->dials = new JMDictElementList();
+        $this->sense_index = 0;
+    }
     
     public static function is_equal(Comparable $sense1, Comparable $sense2)
     {

@@ -412,8 +412,8 @@ class JMDictParser extends DictionaryParser
 
         $sequence_ids_flat = DBConnection::flatten_array(array_keys($this->entry_buffer));
 
-        $entries_uids = $this->jmdb->get_entry_uids($sequence_ids_flat);
-        $entry_uids_flat = DBConnection::flatten_array(array_column($entries_uids, "entry_uid"));
+        $entries = $this->jmdb->get_entry_uids($sequence_ids_flat);
+        $entry_uids_flat = DBConnection::flatten_array(array_column($entries, "entry_uid"));
         
         //kanjis
         $kanjis = $this->jmdb->get_kanjis($entry_uids_flat, $this->version_id, \PDO::FETCH_ASSOC | \PDO::FETCH_GROUP, "entry_uid");
@@ -653,7 +653,10 @@ class JMDictParser extends DictionaryParser
             foreach($expired_kanjis as $expired_kanji)
             {
                 $this->jmdb->remove_kanji($expired_kanji->kanji_uid, $this->version_id);
-                $this->logger->expired_kanji($expired_kanji, $this->version_id);
+                if($this->version_id > 1)
+                {
+                    $this->logger->expired_kanji($expired_kanji);
+                }
             }
 
             foreach($this_entry->kanjis as $this_kanji)
@@ -662,7 +665,10 @@ class JMDictParser extends DictionaryParser
                 {
                     $this_kanji->entry_uid = $this_entry_uid;
                     $this_kanji->kanji_uid = $this->jmdb->new_kanji($this_kanji, $this->version_id);
-                    $this->logger->new_kanji($this_kanji, $this->version_id);
+                    if($this->version_id > 1)
+                    {
+                        $this->logger->new_kanji($this_kanji);
+                    }
                 }
             }
 
@@ -678,7 +684,10 @@ class JMDictParser extends DictionaryParser
                 {
                     $this_reading->entry_uid = $this_entry_uid;
                     $this_reading->reading_uid = $this->jmdb->new_reading($this_reading, $this->version_id);
-                    $this->logger->new_reading($this_reading, $this->version_id);
+                    if($this->version_id > 1)
+                    {
+                        $this->logger->new_reading($this_reading, $this->version_id);
+                    }
                 }
             }
 
@@ -695,7 +704,10 @@ class JMDictParser extends DictionaryParser
                 {
                     $this_sense->entry_uid = $this_entry_uid;
                     $this_sense->reading_uid = $this->jmdb->new_sense($this_sense, $this->version_id);
-                    $logger->new_sense($this_sense, $this->version_id);
+                    if($this->version_id > 1)
+                    {
+                        $logger->new_sense($this_sense);
+                    }
                 }
             }
 
@@ -772,7 +784,10 @@ class JMDictParser extends DictionaryParser
         foreach($this->entry_buffer as $entry)
         {
             $entry->entry_uid = $this->insert_new_entry($entry);
-            $logger->new_entry($entry, $this->version_id);
+            if($this->version_id > 1)
+            {
+                $this->logger->new_entry($entry);
+            }
         }
 
         $this->entry_buffer = array();
@@ -1007,7 +1022,7 @@ class JMDictParser extends DictionaryParser
                     $expired_entry = new JMDictEntry();
                     $expired_entry->entry_uid = $result['entry_uid'];
                     $expired_entry->sequence_id = $result['sequence_id'];
-                    $logger->expired_entry($expired_entry, $this->version_id);
+                    $logger->expired_entry($expired_entry);
                 }
 
                 $sequence_ids_full = array_merge($sequence_ids_full, Security::explode_safe(",",$seq_ids_line));
