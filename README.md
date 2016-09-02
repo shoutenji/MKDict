@@ -2,7 +2,7 @@
 A Japanese-English dictionary based off Jim Breen's JMDict
 
 ## Overview
-A stand alone PHP application that generates the database used in the Android app Manakyun. Running as cron job, this app will download the latest JMDict file, parse it, and insert any changes relative to the previous version into the database. People may be interested in the biweekly XML export of this database available here https://www.manakyun.com/downloads.
+A stand alone PHP application that generates the database used in the Android app Manakyun. Running as a cron job, this app will download the latest JMDict file, parse it, and insert any changes relative to the previous version into the database. People may be interested in the biweekly XML export of this database available here https://www.manakyun.com/downloads.
 
 ## Features
 * A reg-exp based DTD parser
