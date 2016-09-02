@@ -25,7 +25,7 @@ abstract class Logger
     
     abstract public function flush();
     
-    public function __construct()
+    public function __construct(string $logfile_type = "")
     {
         $this->start_time = time();
         $this->new_entries = array();
@@ -40,14 +40,19 @@ abstract class Logger
         $this->libxml_warnings = array();
         $this->warnings = array();
         
-        $this->logfile = new LogFileResource();
+        $this->logfile = new LogFileResource($logfile_type);
         $this->logfile->open();
         
         $this->start_time = time();
     }
     
-    protected function new_line($msg)
+    protected function new_line($msg = "")
     {
+        if(empty($msg))
+        {
+            return "\n";
+        }
+        
         if(substr($msg, -1, 1) !== "\n")
         {
             $msg .= "\n";

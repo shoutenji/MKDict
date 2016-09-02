@@ -11,11 +11,11 @@ class LibXMLError extends FatalException
     public function __construct(\libXMLError $error)
     {
         $this->error = $error;
-        parent::__construct();
+        parent::__construct(debug_backtrace());
     }
     
     public function get_message()
     {
-        return "\n" . $this->colorize_text(ltrim(strrchr(__CLASS__, '\\'),'\\')) . "\n\libxml error:\n" . print_r($this->error, true) . "\nTrace:\n" . print_r($this->getTrace(),true);
+        return "\n" . $this->colorize_text(ltrim(strrchr(__CLASS__, '\\'),'\\')) . "\n\libxml error:\n" . print_r($this->error->message, true) . "\nTrace:\n" . print_r($this->getTrace(),true);
     }
 }

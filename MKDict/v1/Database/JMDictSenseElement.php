@@ -35,6 +35,7 @@ class JMDictSenseElement extends JMDictElement implements Comparable
         $this->lsources = new JMDictElementList();
         $this->dials = new JMDictElementList();
         $this->sense_index = 0;
+        parent::__construct();
     }
     
     public static function is_equal(Comparable $sense1, Comparable $sense2)

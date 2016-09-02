@@ -8,12 +8,14 @@ use MKDict\v1\Database\Comparable;
 
 class JMDictReadingElement extends JMDictStringElement implements Comparable
 {
-    public $b_no_kanji = 0;  //keep this as an int
+    public $b_no_kanji;
     public $restrs;
     
     public function __construct()
     {
+        $this->b_no_kanji = 0;  //keep this as an int (todo fix this)
         $this->restrs = new JMDictElementList();
+        parent::__construct();
     }
     
     public static function is_equal(Comparable $reading1, Comparable $reading2)

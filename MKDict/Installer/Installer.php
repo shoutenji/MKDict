@@ -52,6 +52,8 @@ class Installer
         {
             $this->create_db();
         }
+        
+        $this->logger->flush();
     }
     
     protected function create_db()
@@ -79,7 +81,7 @@ class Installer
         $entries_table->add_column("sequence_id", "BIGINT UNSIGNED", "DEFAULT 0", "NOT NULL");
         $entries_table->add_column("version_added_id", "SMALLINT UNSIGNED", "DEFAULT 0", "NOT NULL");
         $entries_table->add_column("version_removed_id", "SMALLINT UNSIGNED", "DEFAULT NULL", "NULL");
-        $entries_table->add_key("UNIQUE KEY", "sequence_id");
+        //$entries_table->add_key("UNIQUE KEY", "sequence_id");
         $entries_table->create();
 
         $kanji_pris_table = new DBTableCreator($this->db_conn, $config['table_kanjis_pris']);

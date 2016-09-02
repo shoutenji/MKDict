@@ -84,15 +84,17 @@ class PlainTextFileResource implements FileResource, Downloadable
     //todo create a csv interface and unify he csv and temp file resource classes
     public function fgets()
     {
-        if(empty($this->file_handle))
+        if(!empty($this->file_handle))
         {
             return @fgets($this->file_handle);
         }
+        
+        return false;
     }
    
     public function unlink()
     {
-        if(empty($this->file_handle))
+        if(!empty($this->file_handle))
         {
             $this->close($this->file_handle);
             return @unlink($this->file_info->get_path_name());

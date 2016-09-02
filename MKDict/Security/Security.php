@@ -14,6 +14,7 @@ class Security
         return substr($str, 0, 20);
     }
     
+    //todo change this function name to implode_safe
     public static function flatten_array(array $ary, string $type = "int", string $delimiter = ",")
     {
         array_walk($ary, function(&$value, $key) use ($type){

@@ -7,8 +7,14 @@ use MKDict\Logger\Logger;
 use MKDict\Database\JMDictEntity;
 use MKDict\FileResource\LogFileResource;
 
+//todo log format needs to be different for first time imports
 class ImportLogger extends Logger
 {
+    public function __construct()
+    {
+        parent::__construct("import");
+    }
+    
     public function invalid_int($data, JMDictEntity $entry, string $msg = "Invaild integer data")
     {
         $this->unimported_entries[] = array($msg, $entry, $data);
@@ -24,9 +30,16 @@ class ImportLogger extends Logger
         $this->libxml_warnings[] = $warning;
     }
     
-    public function duplicate_sequence_id(JMDictEntity $entry)
+    public function duplicate_sequence_id(JMDictEntity $entry = null, $sequence_id = 0)
     {
-        $this->unimported_entries[] = array("Duplicate sequence id", $entry);
+        if(empty($entry))
+        {
+            $this->unimported_entries[] = array("Duplicate sequence id $sequence_id. The entry corresponding to this sequence_id has been over-written one or more times.", null, $sequence_id);
+        }
+        else
+        {
+            $this->unimported_entries[] = array("Duplicate sequence id. Entry not imported.", $entry);
+        }
     }
     
     public function sequence_id_missing_or_invalid(JMDictEntity $entry)
@@ -129,6 +142,7 @@ class ImportLogger extends Logger
         $log_message = $this->new_line("Import Result");
         $log_message .= $this->new_line(date("F j, Y, g:i a [e]"));
         $log_message .= $this->new_line("Net Time: $this->net_time");
+        $log_message .= $this->new_line();
         
         $libxml_warnings_count = count($this->libxml_warnings);
         $log_message .= $this->new_line("libxml warnings: $libxml_warnings_count");
@@ -138,6 +152,8 @@ class ImportLogger extends Logger
         
         $warnings_count = count($this->warnings);
         $log_message .= $this->new_line("warnings: $warnings_count");
+        
+        $log_message .= $this->new_line();
         
         if($this->version_id > 1)
         {
@@ -151,10 +167,10 @@ class ImportLogger extends Logger
             $log_message .= $this->new_line("new kanjis: $new_kanjis_count");
             
             $expired_kanjis_count = count($this->expired_kanjis);
-            $log_message .= $this->new_line("expired entries: $expired_kanjis_count");
+            $log_message .= $this->new_line("expired kanjis: $expired_kanjis_count");
             
             $new_readings_count = count($this->new_readings);
-            $log_message .= $this->new_line("new reading: $new_readings_count");
+            $log_message .= $this->new_line("new readings: $new_readings_count");
             
             $expired_readings_count = count($this->expired_readings);
             $log_message .= $this->new_line("expired readings: $expired_readings_count");
@@ -163,19 +179,22 @@ class ImportLogger extends Logger
             $log_message .= $this->new_line("new senses: $new_senses_count");
             
             $expired_senses_count = count($this->expired_senses);
-            $log_message .= $this->new_line("expired sense: $expired_senses_count");
+            $log_message .= $this->new_line("expired senses: $expired_senses_count");
         }
         
+        $log_message .= $this->new_line();
         $log_message .= $this->new_line("---------------------------------------------------------------");
+        $log_message .= $this->new_line();
         
         if($libxml_warnings_count > 0)
         {
             $i = 0;
             $log_message .= $this->new_line("libxml warnings:");
+            $log_message .= $this->new_line();
             foreach($this->libxml_warnings as $warning)
             {
                 $i++;
-                $log_message .= $this->new_line("   libxml warning #$i:".$warning->message);
+                $log_message .= $this->new_line("   libxml warning #$i:\n".$warning->message);
             }
         }
         
@@ -183,10 +202,11 @@ class ImportLogger extends Logger
         {
             $i = 0;
             $log_message .= $this->new_line("unimported entries:");
+            $log_message .= $this->new_line();
             foreach($this->unimported_entries as $unimported_entry)
             {
                 $i++;
-                $log_message .= $this->new_line("   unimported entry #$i:".print_r($unimported_entry,true));
+                $log_message .= $this->new_line("   unimported entry #$i:\n".print_r($unimported_entry,true));
             }
         }
         
@@ -194,23 +214,27 @@ class ImportLogger extends Logger
         {
             $i = 0;
             $log_message .= $this->new_line("warnings:");
+            $log_message .= $this->new_line();
             foreach($this->warnings as $warning)
             {
                 $i++;
-                $log_message .= $this->new_line("   warning #$i:".print_r($warning,true));
+                $log_message .= $this->new_line("   warning #$i:\n".print_r($warning,true));
             }
         }
         
         if($this->version_id > 1)
         {
+            $log_message .= $this->new_line();
+            
             if($new_entries_count > 0)
             {
                 $i = 0;
                 $log_message .= $this->new_line("new entries:");
+                $log_message .= $this->new_line();
                 foreach($this->new_entries as $new_entry)
                 {
                     $i++;
-                    $log_message .= $this->new_line("   new entry #$i:".print_r($new_entry,true));
+                    $log_message .= $this->new_line("   new entry #$i:\n".print_r($new_entry,true));
                 }
             }
             
@@ -218,10 +242,11 @@ class ImportLogger extends Logger
             {
                 $i = 0;
                 $log_message .= $this->new_line("expired entries:");
+                $log_message .= $this->new_line();
                 foreach($this->expired_entries as $expired_entry)
                 {
                     $i++;
-                    $log_message .= $this->new_line("   expired entry #$i:".print_r($expired_entry,true));
+                    $log_message .= $this->new_line("   expired entry #$i:\n".print_r($expired_entry,true));
                 }
             }
             
@@ -229,10 +254,11 @@ class ImportLogger extends Logger
             {
                 $i = 0;
                 $log_message .= $this->new_line("new kanjis:");
+                $log_message .= $this->new_line();
                 foreach($this->new_kanjis as $new_kanji)
                 {
                     $i++;
-                    $log_message .= $this->new_line("   new kanji #$i:".print_r($new_kanji,true));
+                    $log_message .= $this->new_line("   new kanji #$i:\n".print_r($new_kanji,true));
                 }
             }
             
@@ -240,10 +266,11 @@ class ImportLogger extends Logger
             {
                 $i = 0;
                 $log_message .= $this->new_line("expired kanjis:");
+                $log_message .= $this->new_line();
                 foreach($this->expired_kanjis as $expired_kanji)
                 {
                     $i++;
-                    $log_message .= $this->new_line("   expired kanji #$i:".print_r($expired_kanji,true));
+                    $log_message .= $this->new_line("   expired kanji #$i:\n".print_r($expired_kanji,true));
                 }
             }
             
@@ -251,10 +278,11 @@ class ImportLogger extends Logger
             {
                 $i = 0;
                 $log_message .= $this->new_line("new readings:");
+                $log_message .= $this->new_line();
                 foreach($this->new_readings as $new_reading)
                 {
                     $i++;
-                    $log_message .= $this->new_line("   new reading #$i:".print_r($new_reading,true));
+                    $log_message .= $this->new_line("   new reading #$i:\n".print_r($new_reading,true));
                 }
             }
             
@@ -262,10 +290,11 @@ class ImportLogger extends Logger
             {
                 $i = 0;
                 $log_message .= $this->new_line("expired readings:");
+                $log_message .= $this->new_line();
                 foreach($this->expired_readings as $expired_reading)
                 {
                     $i++;
-                    $log_message .= $this->new_line("   expired reading #$i:".print_r($expired_reading,true));
+                    $log_message .= $this->new_line("   expired reading #$i:\n".print_r($expired_reading,true));
                 }
             }
             
@@ -273,10 +302,11 @@ class ImportLogger extends Logger
             {
                 $i = 0;
                 $log_message .= $this->new_line("new senses:");
+                $log_message .= $this->new_line();
                 foreach($this->new_senses as $new_sense)
                 {
                     $i++;
-                    $log_message .= $this->new_line("   new senses #$i:".print_r($new_sense,true));
+                    $log_message .= $this->new_line("   new senses #$i:\n".print_r($new_sense,true));
                 }
             }
             
@@ -284,10 +314,11 @@ class ImportLogger extends Logger
             {
                 $i = 0;
                 $log_message .= $this->new_line("expired senses:");
+                $log_message .= $this->new_line();
                 foreach($this->expired_senses as $expired_sense)
                 {
                     $i++;
-                    $log_message .= $this->new_line("   expired senses #$i:".print_r($expired_sense,true));
+                    $log_message .= $this->new_line("   expired senses #$i:\n".print_r($expired_sense,true));
                 }
             }
         }

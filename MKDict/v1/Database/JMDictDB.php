@@ -9,6 +9,7 @@ use MKDict\Logger\Logger;
 use MKDict\Security\Security;
 
 //todo make all version_id args optional, use $this->version id by default
+//tood this class shouldn't do any logging
 class JMDictDB implements JMDictDBInterface
 {
     protected $db_conn;
@@ -79,6 +80,17 @@ class JMDictDB implements JMDictDBInterface
         $this->db_conn->prepare("SELECT entry_uid, sequence_id FROM ".$config['table_entries']." WHERE sequence_id IN($sequence_ids_flat) AND ".$this->db_conn->version_check()." ORDER BY entry_uid;");
         $this->db_conn->bindValue(":version_added_id", $this->version_id, \PDO::PARAM_INT);
         $this->db_conn->bindValue(":version_removed_id", $this->version_id, \PDO::PARAM_INT);
+        $this->db_conn->execute();
+        return $this->db_conn->fetchAll(\PDO::FETCH_ASSOC);
+    }
+    
+    public function get_diff_entry_uids(string $ids_values_flat)
+    {
+        global $config;
+        
+        $this->db_conn->prepare("SELECT sequence_id, entry_uid FROM ".$config['table_entries']." WHERE sequence_id NOT IN($ids_values_flat) AND ".$this->db_conn->version_check().";");
+        $this->db_conn->bindValue(":version_removed_id", $this->version_id, \PDO::PARAM_INT);
+        $this->db_conn->bindValue(":version_added_id", $this->version_id, \PDO::PARAM_INT);
         $this->db_conn->execute();
         return $this->db_conn->fetchAll(\PDO::FETCH_ASSOC);
     }
@@ -1205,7 +1217,7 @@ class JMDictDB implements JMDictDBInterface
 
         if(empty($pre_results))
         {
-            $this->logger->k_or_r_search_failure($stringv, $sense_index);
+            //$this->logger->k_or_r_search_failure($stringv, $sense_index);
             return false;
         }
 
@@ -1245,7 +1257,7 @@ class JMDictDB implements JMDictDBInterface
 
         if(empty($results))
         {
-            $this->logger->k_or_r_search_failure($stringv, $sense_index);
+            //$this->logger->k_or_r_search_failure($stringv, $sense_index);
             return false;
         }
 
@@ -1272,7 +1284,7 @@ class JMDictDB implements JMDictDBInterface
 
         if(empty($pre_results))
         {
-            $this->logger->k_and_r_search_failure($kanji_binary, $reading_binary, $sense_index);
+            //$this->logger->k_and_r_search_failure($kanji_binary, $reading_binary, $sense_index);
             return false;
         }
 
@@ -1309,7 +1321,7 @@ class JMDictDB implements JMDictDBInterface
 
         if(empty($results))
         {
-            $this->logger->k_and_r_search_failure($kanji_binary, $reading_binary, $sense_index);
+            //$this->logger->k_and_r_search_failure($kanji_binary, $reading_binary, $sense_index);
             return false;
         }
 

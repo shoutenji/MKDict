@@ -15,6 +15,7 @@ use MKDict\v1\Database\JMDictKanjiElement;
 use MKDict\v1\Database\JMDictReadingElement;
 use MKDict\v1\Database\JMDictSenseElement;
 use MKDict\v1\Database\JMDictStringElement;
+use MKDict\v1\Database\JMDictElementList;
 
 class JMDictParser extends DictionaryParser
 {
@@ -22,6 +23,7 @@ class JMDictParser extends DictionaryParser
     
     protected $attribs;
     protected $entry_buffer;
+    protected $duplicate_sequence_id;
 
     const ELEMENT_ENTRY = 'entry';
     const ELEMENT_ENTRY_SEQUENCE = 'ent_seq';
@@ -140,17 +142,18 @@ class JMDictParser extends DictionaryParser
     {
         global $config;
         
-        $duplicate_id = false;
-        
         switch($name)
         {
             case self::ELEMENT_ENTRY:
-                $this->insert_entry();
-                if($duplicate_id)
+                if($this->duplicate_sequence_id)
                 {
                     $this->logger->duplicate_sequence_id($this->entry);
                     $this->entry->invalid_data = true;
-                    $duplicate_id = false;
+                    $this->duplicate_sequence_id = false;
+                }
+                else
+                {
+                    $this->insert_entry();
                 }
                 break;
 
@@ -160,7 +163,7 @@ class JMDictParser extends DictionaryParser
                 //but it ensures we wont overwrite an entry in the buffer and thereby fail to record duplicate entries in the tmp file later on
                 if(in_array($this->entry->sequence_id, $this->sequence_ids))
                 {
-                    $duplicate_id = true;
+                    $this->duplicate_sequence_id = true;
                 }
                 else
                 {
@@ -202,16 +205,16 @@ class JMDictParser extends DictionaryParser
                 break;
 
             case self::ELEMENT_READING_RESTRICTION:
-                $this->reading->restrs[]['binary_raw'] = $this->clean_raw_text($this->character_buffer);
+                $this->reading->restrs->append(array('binary_raw' => $this->clean_raw_text($this->character_buffer)));
                 break;
 
             case self::ELEMENT_READING_INFO:
                 $val = $this->clean_raw_text($this->character_buffer);
-                $this->reading->infos[]['binary_raw'] = $val;
+                $this->reading->infos->append(array('binary_raw' => $val));
                 break;
 
             case self::ELEMENT_KANJI_INFO:
-                $this->kanji->infos[]['binary_raw'] = $this->clean_raw_text($this->character_buffer);
+                $this->kanji->infos->append(array('binary_raw' => $this->clean_raw_text($this->character_buffer)));
                 break;
 
             case self::ELEMENT_SENSE_GLOSS:
@@ -219,40 +222,39 @@ class JMDictParser extends DictionaryParser
                 $gloss['binary_raw'] = $this->clean_raw_text($this->character_buffer);
                 $gloss['lang'] = isset($this->attribs['xml:lang']) ?  $this->attribs['xml:lang'] : "";
                 $gloss['gend'] = isset($this->attribs['g_gend']) ? $this->attribs['g_gend'] : "";
-                $this->sense->glosses[] = $gloss;
+                $this->sense->glosses->append($gloss);
                 break;
 
             case self::ELEMENT_POS:
-                $val = $this->clean_raw_text($this->character_buffer);
-                $this->sense->poses[]['binary_raw'] = $val;
+                $this->sense->poses->append(array('binary_raw' => $this->clean_raw_text($this->character_buffer)));
                 break;
 
             case self::ELEMENT_SENSE_FIELD:
-                $this->sense->fields[]['binary_raw'] = $this->clean_raw_text($this->character_buffer);
+                $this->sense->fields->append(array('binary_raw' => $this->clean_raw_text($this->character_buffer)));
                 break;
 
             case self::ELEMENT_SENSE_MISC:
-                $this->sense->miscs[]['binary_raw'] = $this->clean_raw_text($this->character_buffer);
+                $this->sense->miscs->append(array('binary_raw' => $this->clean_raw_text($this->character_buffer)));
                 break;
 
             case self::ELEMENT_SENSE_STAGR:
-                $this->sense->stagrs[]['binary_raw'] = $this->clean_raw_text($this->character_buffer);
+                $this->sense->stagrs->append(array('binary_raw' => $this->clean_raw_text($this->character_buffer)));
                 break;
 
             case self::ELEMENT_SENSE_STAGK:
-                $this->sense->stagks[]['binary_raw'] = $this->clean_raw_text($this->character_buffer);
+                $this->sense->stagks->append(array('binary_raw' => $this->clean_raw_text($this->character_buffer)));
                 break;
 
             case self::ELEMENT_SENSE_XREF:
-                $this->sense->xrefs[]['binary_raw'] = $this->clean_raw_text($this->character_buffer);
+                $this->sense->xrefs->append(array('binary_raw' => $this->clean_raw_text($this->character_buffer)));
                 break;
 
             case self::ELEMENT_SENSE_ANT:
-                $this->sense->ants[]['binary_raw'] = $this->clean_raw_text($this->character_buffer);
+                $this->sense->ants->append(array('binary_raw' => $this->clean_raw_text($this->character_buffer)));
                 break;
 
             case self::ELEMENT_SENSE_INF:
-                $this->sense->infos[]['binary_raw'] = $this->clean_raw_text($this->character_buffer);
+                $this->sense->infos->append(array('binary_raw' => $this->clean_raw_text($this->character_buffer)));
                 break;
 
             case self::ELEMENT_SENSE_LSOURCE:
@@ -261,19 +263,19 @@ class JMDictParser extends DictionaryParser
                 $lsource['lang'] = isset($this->attribs['xml:lang']) ? $this->attribs['xml:lang'] : "";
                 $lsource['type'] = isset($this->attribs['ls_type']) ? $this->attribs['ls_type'] : "";
                 $lsource['wasei'] = isset($this->attribs['ls_wasei']) ? ( strtoupper(substr($this->attribs['ls_wasei'],0,1)) === "Y" ? "Y" : "" ) : "";
-                $this->sense->lsources[] = $lsource;
+                $this->sense->lsources->append($lsource);
                 break;
 
             case self::ELEMENT_SENSE_DIAL:
-                $this->sense->dials[]['binary_raw'] = $this->clean_raw_text($this->character_buffer);
+                $this->sense->dials->append(array('binary_raw' => $this->clean_raw_text($this->character_buffer)));
                 break;
 
             case self::ELEMENT_READING_PRI:
-                $this->reading->pris[]['binary_raw'] = $this->clean_raw_text($this->character_buffer);
+                $this->reading->pris->append(array('binary_raw' => $this->clean_raw_text($this->character_buffer)));
                 break;
 
             case self::ELEMENT_KANJI_PRI:
-                $this->kanji->pris[]['binary_raw'] = $this->clean_raw_text($this->character_buffer);
+                $this->kanji->pris->append(array('binary_raw' => $this->clean_raw_text($this->character_buffer)));
                 break;
 
             case self::ELEMENT_JMDOCUMENT:
@@ -377,6 +379,7 @@ class JMDictParser extends DictionaryParser
         //if the entry does not contain valid data, it's safe now to skip this entry's processing
         if(false === $this->entry_validate())
         {
+            echo "returning 1\n";
             return;
         }
 
@@ -495,13 +498,13 @@ class JMDictParser extends DictionaryParser
 
                     if(isset($kanji_pris[$that_kanji['kanji_uid']]))
                     {
-                        $that_kanji_obj->pris = $kanji_pris[$that_kanji['kanji_uid']];
+                        $that_kanji_obj->pris = new JMDictElementList($kanji_pris[$that_kanji['kanji_uid']]);
                         unset($kanji_pris[$that_kanji['kanji_uid']]);
                     }
 
                     if(isset($kanji_infos[$that_kanji['kanji_uid']]))
                     {
-                        $that_kanji_obj->infos = $kanji_infos[$that_kanji['kanji_uid']];
+                        $that_kanji_obj->infos = new JMDictElementList($kanji_infos[$that_kanji['kanji_uid']]);
                         unset($kanji_infos[$that_kanji['kanji_uid']]);
                     }
 
@@ -534,19 +537,19 @@ class JMDictParser extends DictionaryParser
 
                 if(isset($reading_restrs[$that_reading['reading_uid']]))
                 {
-                    $that_reading_obj->restrs = $reading_restrs[$that_reading['reading_uid']];
+                    $that_reading_obj->restrs = new JMDictElementList($reading_restrs[$that_reading['reading_uid']]);
                     unset($reading_restrs[$that_reading['reading_uid']]);
                 }
 
                 if(isset($reading_pris[$that_reading['reading_uid']]))
                 {
-                    $that_reading_obj->pris = $reading_pris[$that_reading['reading_uid']];
+                    $that_reading_obj->pris = new JMDictElementList($reading_pris[$that_reading['reading_uid']]);
                     unset($reading_pris[$that_reading['reading_uid']]);
                 }
 
                 if(isset($reading_infos[$that_reading['reading_uid']]))
                 {
-                    $that_reading_obj->infos = $reading_infos[$that_reading['reading_uid']];
+                    $that_reading_obj->infos = new JMDictElementList($reading_infos[$that_reading['reading_uid']]);
                     unset($reading_infos[$that_reading['reading_uid']]);
                 }
 
@@ -574,67 +577,67 @@ class JMDictParser extends DictionaryParser
 
                 if(isset($sense_infos[$that_sense['sense_uid']]))
                 {
-                    $that_sense_obj->infos = $sense_infos[$that_sense['sense_uid']];
+                    $that_sense_obj->infos = new JMDictElementList($sense_infos[$that_sense['sense_uid']]);
                     unset($sense_infos[$that_sense['sense_uid']]);
                 }
 
                 if(isset($sense_poses[$that_sense['sense_uid']]))
                 {
-                    $that_sense_obj->poses = $sense_poses[$that_sense['sense_uid']];
+                    $that_sense_obj->poses = new JMDictElementList($sense_poses[$that_sense['sense_uid']]);
                     unset($sense_poses[$that_sense['sense_uid']]);
                 }
 
                 if(isset($sense_fields[$that_sense['sense_uid']]))
                 {
-                    $that_sense_obj->fields = $sense_fields[$that_sense['sense_uid']];
+                    $that_sense_obj->fields = new JMDictElementList($sense_fields[$that_sense['sense_uid']]);
                     unset($sense_fields[$that_sense['sense_uid']]);
                 }
 
                 if(isset($sense_miscs[$that_sense['sense_uid']]))
                 {
-                    $that_sense_obj->miscs = $sense_miscs[$that_sense['sense_uid']];
+                    $that_sense_obj->miscs = new JMDictElementList($sense_miscs[$that_sense['sense_uid']]);
                     unset($sense_miscs[$that_sense['sense_uid']]);
                 }
 
                 if(isset($sense_dials[$that_sense['sense_uid']]))
                 {
-                    $that_sense_obj->dials = $sense_dials[$that_sense['sense_uid']];
+                    $that_sense_obj->dials = new JMDictElementList($sense_dials[$that_sense['sense_uid']]);
                     unset($sense_dials[$that_sense['sense_uid']]);
                 }
 
                 if(isset($sense_glosses[$that_sense['sense_uid']]))
                 {
-                    $that_sense_obj->glosses = $sense_glosses[$that_sense['sense_uid']];
+                    $that_sense_obj->glosses = new JMDictElementList($sense_glosses[$that_sense['sense_uid']]);
                     unset($sense_glosses[$that_sense['sense_uid']]);
                 }
 
                 if(isset($sense_lsources[$that_sense['sense_uid']]))
                 {
-                    $that_sense_obj->lsources = $sense_lsources[$that_sense['sense_uid']];
+                    $that_sense_obj->lsources = new JMDictElementList($sense_lsources[$that_sense['sense_uid']]);
                     unset($sense_lsources[$that_sense['sense_uid']]);
                 }
 
                 if(isset($sense_stagrs[$that_sense['sense_uid']]))
                 {
-                    $that_sense_obj->stagrs = $sense_stagrs[$that_sense['sense_uid']];
+                    $that_sense_obj->stagrs = new JMDictElementList($sense_stagrs[$that_sense['sense_uid']]);
                     unset($sense_stagrs[$that_sense['sense_uid']]);
                 }
 
                 if(isset($sense_stagks[$that_sense['sense_uid']]))
                 {
-                    $that_sense_obj->stagks = $sense_stagks[$that_sense['sense_uid']];
+                    $that_sense_obj->stagks = new JMDictElementList($sense_stagks[$that_sense['sense_uid']]);
                     unset($sense_stagks[$that_sense['sense_uid']]);
                 }
 
                 if(isset($sense_ants[$that_sense['sense_uid']]))
                 {
-                    $that_sense_obj->ants = $sense_ants[$that_sense['sense_uid']];
+                    $that_sense_obj->ants = new JMDictElementList($sense_ants[$that_sense['sense_uid']]);
                     unset($sense_ants[$that_sense['sense_uid']]);
                 }
 
                 if(isset($sense_xrefs[$that_sense['sense_uid']]))
                 {
-                    $that_sense_obj->xrefs = $sense_xrefs[$that_sense['sense_uid']];
+                    $that_sense_obj->xrefs = new JMDictElementList($sense_xrefs[$that_sense['sense_uid']]);
                     unset($sense_xrefs[$that_sense['sense_uid']]);
                 }
 
@@ -694,7 +697,7 @@ class JMDictParser extends DictionaryParser
             foreach($expired_senses as $expired_sense)
             {
                 $this->jmdb->remove_sense($expired_sense->sense_uid, $this->version_id);
-                $logger->expired_sense($expired_sense, $this->version_id);
+                $this->logger->expired_sense($expired_sense, $this->version_id);
             }
             unset($expired_senses);
 
@@ -706,7 +709,7 @@ class JMDictParser extends DictionaryParser
                     $this_sense->reading_uid = $this->jmdb->new_sense($this_sense, $this->version_id);
                     if($this->version_id > 1)
                     {
-                        $logger->new_sense($this_sense);
+                        $this->logger->new_sense($this_sense);
                     }
                 }
             }
@@ -940,6 +943,7 @@ class JMDictParser extends DictionaryParser
         {
             $values = Security::explode_safe($config['jmdict_ref_field_delimiter'], $reference_type['binary_raw'], "string");
             
+            $results = "";
             $reference_format = count($values);
             switch($reference_format)
             {
@@ -964,10 +968,13 @@ class JMDictParser extends DictionaryParser
                 case 3:
                     if(!is_numeric($values[2]))
                     {
-                        $this->logger->invalid_reference_type($reference_type, "Invalid reference element. 3rd component is not a valid integer");
-                        continue;
+                        //$this->logger->invalid_reference_type($reference_type, "Invalid reference element. 3rd component is not a valid integer");
+                        $results = false;
                     }
-                    $results = $this->jmdb->k_and_r_search($this->version_id, trim(strval($values[0])), trim(strval($values[1])), intval(trim($values[2])));
+                    else
+                    {
+                        $results = $this->jmdb->k_and_r_search($this->version_id, trim(strval($values[0])), trim(strval($values[1])), intval(trim($values[2])));
+                    }
                     break;
 
                 default:
@@ -989,9 +996,10 @@ class JMDictParser extends DictionaryParser
 
             if(false === $results)
             {
-                //try the reference type again but with the raw string data, or in other words, assume now the self::REF_FIELD_DELIMETER character is part of the string data
+                //try the reference type again but with the raw string data, or in other words, assume now the delimiter character used is part of the string data
                 if(false === $results = $this->jmdb->k_or_r_search($this->version_id, trim(strval($reference_type['binary_raw'])), 0))
                 {
+                    $this->logger->invalid_reference_type($reference_type, "Invalid reference type");
                     continue;
                 }
             }
@@ -1007,28 +1015,31 @@ class JMDictParser extends DictionaryParser
             $this->write_merge_buffer();
             $this->tmp_file->rewind();
             $sequence_ids_full = array();
+            
             while(false !== $seq_ids_line = $this->tmp_file->fgets())
             {
-                $ids_values = trim($seq_ids_line);
-                $this->db_conn->prepare("SELECT sequence_id, entry_uid FROM ".$config['table_entries']." WHERE sequence_id NOT IN($ids_values) AND ".$this->db_conn->version_check().";");
-                $this->db_conn->bindValue(":version_removed_id", $this->version_id, \PDO::PARAM_INT);
-                $this->db_conn->bindValue(":version_added_id", $this->version_id, \PDO::PARAM_INT);
-                $this->db_conn->execute();
-                $results = $this->db_conn->fetchAll(\PDO::FETCH_ASSOC);
+                $sequence_ids_ary = Security::explode_safe(",", trim($seq_ids_line));
+                $sequence_ids_flat = Security::flatten_array($sequence_ids_ary);
+                $expired_entries = $this->jmdb->get_diff_entry_uids($sequence_ids_flat);
 
-                foreach($results as $result)
+                foreach($expired_entries as $expired_entry_row)
                 {
-                    $this->jmdb->remove_entry($result['entry_uid'], $this->version_id);
+                    $this->jmdb->remove_entry($expired_entry_row['entry_uid'], $this->version_id);
                     $expired_entry = new JMDictEntry();
-                    $expired_entry->entry_uid = $result['entry_uid'];
-                    $expired_entry->sequence_id = $result['sequence_id'];
-                    $logger->expired_entry($expired_entry);
+                    $expired_entry->entry_uid = $expired_entry_row['entry_uid'];
+                    $expired_entry->sequence_id = $expired_entry_row['sequence_id'];
+                    $this->logger->expired_entry($expired_entry);
                 }
 
-                $sequence_ids_full = array_merge($sequence_ids_full, Security::explode_safe(",",$seq_ids_line));
+                $sequence_ids_full = array_merge($sequence_ids_full, $sequence_ids_ary);
             }
 
-            //TODO check sequence_ids for duplicates and then throw error
+            //check the full list of sequence_ids for duplicates and then logg the duplicate's presence
+            $duplicate_sequence_ids = array_filter(array_count_values($sequence_ids_full), function($value){ return $value > 1 ? true : false;});
+            foreach($duplicate_sequence_ids as $sequence_id)
+            {
+                $this->logger->duplicate_sequence_id(null, $sequence_id);
+            }
 
             if(!$this->tmp_file->feof())
             {

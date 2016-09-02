@@ -55,8 +55,8 @@ class JMDictElement implements JMDictEntity
             $keys = array_slice(func_get_args(), 2);
             foreach($keys as $key)
             {
-                $this_func = __NAMESPACE__ ."\\". __CLASS__."::".__FUNCTION__;
-                if(!$this_func(array_column($ary1, $key), array_column($ary2, $key)))
+                $this_func = __CLASS__."::".__FUNCTION__;
+                if(!$this_func(new JMDictElementList(array_column($ary1, $key)), new JMDictElementList(array_column($ary2, $key))))
                 {
                     return false;
                 }
