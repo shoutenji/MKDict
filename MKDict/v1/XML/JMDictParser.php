@@ -17,6 +17,11 @@ use MKDict\v1\Database\JMDictSenseElement;
 use MKDict\v1\Database\JMDictStringElement;
 use MKDict\v1\Database\JMDictElementList;
 
+/**
+* The versioned parser for the JMDict dictionary.
+* 
+* @author Taylor B <taylorbrontario@riseup.net>
+*/
 class JMDictParser extends DictionaryParser
 {
     protected static $ENTITY_ID = 'd73ilHD34h8dyq';
@@ -57,12 +62,12 @@ class JMDictParser extends DictionaryParser
         return array_merge(parent::get_parser_passes(), array("parser_pass_2"));
     }
 
-    public function character_data_handler($parser, $data)
+    public function character_data_handler(resource $parser, string $data)
     {
-        $this->character_buffer .= $data;
+        $this->character_buffer .= strval($data);
     }
 
-    public function start_element_handler($parser, $name, $attribs)
+    public function start_element_handler(resource $parser, string $name, array $attribs)
     {
         global $options;
 
@@ -138,7 +143,7 @@ class JMDictParser extends DictionaryParser
     }
 
 
-    public function end_element_handler($parser, $name)
+    public function end_element_handler(resource $parser, string $name)
     {
         global $config;
         
@@ -323,7 +328,7 @@ class JMDictParser extends DictionaryParser
         {
             $this->entry->invalid_data = true;
         }
-        $val = trim($this->replace_entity_tags($result));
+        $val = trim($this->strip_entity_tags($result));
         return $val;
     }
 
@@ -415,7 +420,7 @@ class JMDictParser extends DictionaryParser
 
         $sequence_ids_flat = DBConnection::flatten_array(array_keys($this->entry_buffer));
 
-        $entries = $this->jmdb->get_entry_uids($sequence_ids_flat);
+        $entries = $this->jmdb->get_entries($sequence_ids_flat);
         $entry_uids_flat = DBConnection::flatten_array(array_column($entries, "entry_uid"));
         
         //kanjis

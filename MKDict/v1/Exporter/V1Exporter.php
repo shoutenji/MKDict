@@ -6,7 +6,7 @@ use MKDict\Database\DBConnection;
 use MKDict\Exporter\Exporter;
 use MKDict\Database\JMDictEntity;
 use MKDict\FileResource\FileInfo;
-use MKDict\FileResource\PlainTextFileResource;
+use MKDict\FileResource\ByteStreamFileResource;
 
 use MKDict\v1\Database\JMDictDB;
 use MKDict\v1\Database\JMDictEntry;
@@ -50,7 +50,7 @@ class V1Exporter extends Exporter
                 
         $this->db_conn = new DBConnection($config['dsn'], $config['db_user'], $config['db_pass']);
         $this->jmdb = new JMDictDB($this->db_conn, $this->version_id);
-        $this->file = new PlainTextFileResource(new FileInfo("export_$this->version_id.xml", $config['export_dir'], null, array(), "w"));
+        $this->file = new ByteStreamFileResource(new FileInfo("export_$this->version_id.xml", $config['export_dir'], null, array(), "w"));
         $this->file->open();
     }
     

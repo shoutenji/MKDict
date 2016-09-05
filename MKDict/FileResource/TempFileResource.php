@@ -2,12 +2,20 @@
 
 namespace MKDict\FileResource;
 
-use MKDict\FileResource\PlainTextFileResource;
+use MKDict\FileResource\ByteStreamFileResource;
 use MKDict\FileResource\FileInfo;
 use MKDict\Security\Security;
 
-class TempFileResource extends PlainTextFileResource
+/**
+ * A file resource class representing a plain text temporary file. These files can always be safely deleted afterwards.
+ * 
+ * @author Taylor B <taylorbrontario@riseup.net>
+ */
+class TempFileResource extends ByteStreamFileResource
 {
+    /**
+     * Constructor
+     */
     public function __construct()
     {
         global $config;

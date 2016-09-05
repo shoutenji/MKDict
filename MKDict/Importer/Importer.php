@@ -4,7 +4,7 @@ namespace MKDict\Importer;
 
 use MKDict\FileResource\FileInfo;
 use MKDict\FileResource\GZFileResource;
-use MKDict\FileResource\PlainTextFileResource;
+use MKDict\FileResource\ByteStreamFileResource;
 use MKDict\FileResource\Url;
 use MKDict\Security\Security;
 use MKDict\FileResource\Exception\GZException\GZBadHeaderException;
@@ -264,7 +264,7 @@ class Importer
         );
         
         //we have to read regular bytes from the gzip file header
-        $jmdict_local_file_plaintext = new PlainTextFileResource($this->jmdict_file->get_finfo());
+        $jmdict_local_file_plaintext = new ByteStreamFileResource($this->jmdict_file->get_finfo());
         $jmdict_local_file_plaintext->open();
         $header = $jmdict_local_file_plaintext->read(10);
         

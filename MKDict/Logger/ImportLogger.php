@@ -7,30 +7,74 @@ use MKDict\Logger\Logger;
 use MKDict\Database\JMDictEntity;
 use MKDict\FileResource\LogFileResource;
 
-//todo log format needs to be different for first time imports
+/**
+ * A logging class
+ * 
+ * @author Taylor B <taylorbrontario@riseup.net>
+ * 
+ * @todo make different log formats for first time imports and all successive imports
+ */
 class ImportLogger extends Logger
 {
+    /**
+     * Constructor
+     * 
+     * @return void
+     */
     public function __construct()
     {
         parent::__construct("import");
     }
     
+    /**
+     * Log an invalid int error
+     * 
+     * @param mixed $data The invalid data
+     * @param JMDictEntity $entry The entry object the invalid data occurred in
+     * @param string $msg Error message
+     * 
+     * @return void
+     */
     public function invalid_int($data, JMDictEntity $entry, string $msg = "Invaild integer data")
     {
         $this->unimported_entries[] = array($msg, $entry, $data);
     }
     
+    /**
+     * Log an invalid string error
+     * 
+     * @param mixed $data The invalid data
+     * @param JMDictEntity $entry The entry object the invalid data occurred in
+     * @param string $msg Error message
+     * 
+     * @return void
+     */
     public function invalid_string($data, JMDictEntity $entry, string $msg = "Invalid string data")
     {
         $this->unimported_entries[] = array($msg, $entry, $data);
     }
     
+    /**
+     * Log a libxml warning
+     * 
+     * @param libXMLError $warning The libxml error
+     * 
+     * @return void
+     */
     public function libxml_warning(\libXMLError $warning)
     {
         $this->libxml_warnings[] = $warning;
     }
     
-    public function duplicate_sequence_id(JMDictEntity $entry = null, $sequence_id = 0)
+    /**
+     * Log an duplicate sequence id error
+     * 
+     * @param JMDictEntity $entry The entry
+     * @param int $sequence_id The sequence id
+     * 
+     * @return void
+     */
+    public function duplicate_sequence_id(JMDictEntity $entry = null, int $sequence_id = 0)
     {
         if(empty($entry))
         {
@@ -42,97 +86,236 @@ class ImportLogger extends Logger
         }
     }
     
+    /**
+     * Log an duplicate or missing sequence id error
+     * 
+     * @param JMDictEntity $entry The entry
+     * 
+     * @return void
+     */
     public function sequence_id_missing_or_invalid(JMDictEntity $entry)
     {
         $this->unimported_entries[] = array("Missing or invalid sequence id", $entry);
     }
     
+    /**
+     * Log an missing reading element error
+     * 
+     * @param JMDictEntity $entry The entry
+     * 
+     * @return void
+     */
     public function missing_reading_element(JMDictEntity $entry)
     {
         $this->unimported_entries[] = array("Missing reading element", $entry);
     }
     
+    /**
+     * Log an missing sense element error
+     * 
+     * @param JMDictEntity $entry The entry
+     * 
+     * @return void
+     */
     public function missing_sense_element(JMDictEntity $entry)
     {
         $this->unimported_entries[] = array("Missing sense element", $entry);
     }
     
+    /**
+     * Log an missing binary element error
+     * 
+     * @param JMDictEntity $entry The entry
+     * 
+     * @return void
+     */
     public function missing_binary_field(JMDictEntity $entry)
     {
         $this->unimported_entries[] = array("Missing binary field on one or more elements", $entry);
     }
     
+    /**
+     * Log an missing restr target element error
+     * 
+     * @param JMDictEntity $entry The entry
+     * @param JMDictEntity $reading The reading which contains the restr
+     * 
+     * @return void
+     */
     public function restr_target_not_found(JMDictEntity $entry, JMDictEntity $reading)
     {
         $this->warnings[] = array("Restr target not found", $entry, $reading);
     }
     
+    /**
+     * Log a new entry
+     * 
+     * @param JMDictEntity $entry The new entry
+     * 
+     * @return void
+     */
     public function new_entry(JMDictEntity $new_entry)
     {
         $this->new_entries[] = $new_entry;
     }
     
+    /**
+     * Log an expired entry
+     * 
+     * @param JMDictEntity $expired_entry The expired entry
+     * 
+     * @return void
+     */
     public function expired_entry(JMDictEntity $expired_entry)
     {
         $this->expired_entries[] = $expired_entry;
     }
     
+    /**
+     * Log a new kanji
+     * 
+     * @param JMDictEntity $new_kanji The new kanji
+     * 
+     * @return void
+     */
     public function new_kanji(JMDictEntity $new_kanji)
     {
         $this->new_kanjis[] = $new_kanji;
     }
     
+    /**
+     * Log an expired kanji
+     * 
+     * @param JMDictEntity $expired_kanji The expired kanji
+     * 
+     * @return void
+     */
     public function expired_kanji(JMDictEntity $expired_kanji)
     {
         $this->expired_kanjis[] = $expired_kanji;
     }
     
+    /**
+     * Log a new kanji
+     * 
+     * @param JMDictEntity $new_reading The new reading
+     * 
+     * @return void
+     */
     public function new_reading(JMDictEntity $new_reading)
     {
         $this->new_readings[] = $new_reading;
     }
     
+    /**
+     * Log an expired reading
+     * 
+     * @param JMDictEntity $expired_reading The expired reading
+     * 
+     * @return void
+     */
     public function expired_reading(JMDictEntity $expired_reading)
     {
         $this->expired_readings[] = $expired_reading;
     }
     
+    /**
+     * Log a new sense
+     * 
+     * @param JMDictEntity $new_sense The new sense
+     * 
+     * @return void
+     */
     public function new_sense(JMDictEntity $new_sense)
     {
         $this->new_senses[] = $new_sense;
     }
     
+    /**
+     * Log an expired sense
+     * 
+     * @param JMDictEntity $expired_sense The expired sense
+     * 
+     * @return void
+     */
     public function expired_sense(JMDictEntity $expired_sense)
     {
         $this->expired_senses[] = $expired_sense;
     }
     
+    /**
+     * Log a stagr target not found error
+     * 
+     * @param JMDictEntity $expired_sense The entry
+     * @param JMDictEntity $sense The sense
+     * 
+     * @return void
+     */
     public function stagr_target_not_found(JMDictEntity $entry, JMDictEntity $sense)
     {
         $this->warnings[] = array("Stagr target not found", $entry, $sense);
     }
     
+    /**
+     * Log a stagr target not found error
+     * 
+     * @param JMDictEntity $expired_sense The entry
+     * @param JMDictEntity $sense The sense
+     * 
+     * @return void
+     */
     public function stakr_target_not_found(JMDictEntity $entry, JMDictEntity $sense)
     {
         $this->warnings[] = array("Stagk target not found", $entry, $sense);
     }
     
-    public function invalid_reference_type(array $reference_type, $msg = "Invalid reference type")
+    /**
+     * Log an invalid reference type error
+     * 
+     * @param array $reference_type The reference data
+     * @param string $msg The error message
+     * 
+     * @return void
+     */
+    public function invalid_reference_type(array $reference_type, string $msg = "Invalid reference type")
     {
         $this->warnings[] = array($msg, $reference_type);
     }
     
-    public function k_and_r_search_failure($kanji_binary, $reading_binary, $sense_index)
+    /**
+     * Log a k_and_r search failure
+     * 
+     * @param string $kanji_binary The kanji binary
+     * @param string $reading_binary The reading binary
+     * @param int $sense_index The sense index
+     * 
+     * @return void
+     */
+    public function k_and_r_search_failure(string $kanji_binary, string $reading_binary, int $sense_index = 0)
     {
         $this->warnings[] = array("Failed to find reference type: ", null, compact("kanji_binary", "reading_binary", "sense_index"));
     }
     
-    public function k_or_r_search_failure($stringv, $sense_index)
+    /**
+     * Log a k_or_r search failure
+     * 
+     * @param string $stringv The kanji or reading binary
+     * @param int $sense_index The sense index
+     * 
+     * @return void
+     */
+    public function k_or_r_search_failure(string $stringv, int $sense_index = 0)
     {
         $this->warnings[] = array("Failed to find reference type: ", null, compact("stringv","sense_index"));
     }
     
-    //todo a lot of repetition here
+    /**
+     * Write log messages to file
+     * 
+     * @return void
+     * 
+     * @todo a lot of repetition here
+     */
     public function flush()
     {
         $this->finish_time = time();

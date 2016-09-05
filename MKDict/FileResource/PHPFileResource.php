@@ -2,35 +2,73 @@
 
 namespace MKDict\FileResource;
 
-use MKDict\FileResource\PlainTextFileResource;
+use MKDict\FileResource\ByteStreamFileResource;
 
-//a very specific class for writing special php files which contain only global variables
-class PHPFileResource extends PlainTextFileResource
+/**
+ * A file resource class representing a plain text PHP file. Currently only used to write the generated Unicode data files.
+ * 
+ * @author Taylor B <taylorbrontario@riseup.net>
+ */
+class PHPFileResource extends ByteStreamFileResource
 {
+    /** @var string The header text */
     protected $header;
+    
+    /** @var string The footer text */
     protected $footer;
+    
+    /** @var string The body text */
     protected $body;
     
-    public static function sanatize_string_literal($text)
+    /**
+     * Sanatize a string intended to be written to the PHP file as a literal
+     * 
+     * @param string $text The string to sanatize
+     * @return string
+     */
+    public static function sanatize_string_literal(string $text)
     {
         return strtr($text, array("\\"=>"\\\\", "\""=>"\\\"", "$"=>"\$"));
     }
     
-    public function header($header)
+    /**
+     * Set header
+     * 
+     * @param string $header
+     * @return void
+     */
+    public function header(string $header)
     {
         $this->header = $header;
     }
     
-    public function footer($footer)
+    /**
+     * Set footer
+     * 
+     * @param string $footer
+     * @return void
+     */
+    public function footer(string $footer)
     {
         $this->footer = $footer;
     }
    
-    public function body_add($text)
+    /**
+     * Add body statement
+     * 
+     * @param string $text
+     * @return void
+     */
+    public function body_add(string $text)
     {
         $this->body[] = $text;
     }
     
+    /**
+     * Finally write this file
+     * 
+     * @return void
+     */
     public function create_file()
     {
         $this->write($this->header);

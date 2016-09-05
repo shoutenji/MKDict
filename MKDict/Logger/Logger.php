@@ -4,27 +4,70 @@ namespace MKDict\Logger;
 
 use MKDict\FileResource\LogFileResource;
 
+/**
+ * A logging class
+ * 
+ * @author Taylor B <taylorbrontario@riseup.net>
+ */
 abstract class Logger
 {
+    /** @var int starting time */
     protected $start_time;
+    
+    /** @var int finish time */
     protected $finish_time;
+    
+    /** @var int total time taken */
     protected $net_time;
     
+    /** @var LogFileResource The log file object*/
     protected $logfile;
+    
+    /** @var array The newest entries */
     protected $new_entries;
-    protected $unimported_entries; //entries that failed to be imported
+    
+    /** @var array Entries that failed to be imported */
+    protected $unimported_entries; 
+    
+    /** @var array Entries that are to be removed from the db */
     protected $expired_entries;
+    
+    /** @var array The new kanjis */
     protected $new_kanjis;
+    
+    /** @var array The kanjis that are to be removed from the db */
     protected $expired_kanjis;
+    
+    /** @var array The new readings */
     protected $new_readings;
+    
+    /** @var array The readings that are to be removed from the db */
     protected $expired_readings;
+    
+    /** @var array The new senses */
     protected $new_senses;
+    
+    /** @var array The senses that are to be removed from the db */
     protected $expired_senses;
+    
+    /** @var array libxml warnings*/
     protected $libxml_warnings;
+    
+    /** @var array Warnings */
     protected $warnings;
     
+    /**
+     * Write the logs contents to file
+     */
     abstract public function flush();
     
+    /**
+     * Constructor
+     * 
+     * @param string $logfile_type either import or install 
+     * 
+     * @return void
+     */
     public function __construct(string $logfile_type = "")
     {
         $this->start_time = time();
@@ -46,7 +89,14 @@ abstract class Logger
         $this->start_time = time();
     }
     
-    protected function new_line($msg = "")
+    /**
+     * Outputs a line while handling newline characters
+     * 
+     * @param string $msg 
+     * 
+     * @return string
+     */
+    protected function new_line(string $msg = "")
     {
         if(empty($msg))
         {

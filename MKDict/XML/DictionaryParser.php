@@ -10,6 +10,11 @@ use MKDict\Exception\StaticBindingFailure;
 use MKDict\Exception\LibXMLError;
 use MKDict\Logger\Logger;
 
+/**
+* The XML parser for the JMDict file. This parser can be extended but you must still use this classes parser pass functions
+* 
+* @author Taylor B <taylorbrontario@riseup.net>
+*/
 abstract class DictionaryParser
 {
     protected $file, $dtd, $check_doc_name;
@@ -21,11 +26,55 @@ abstract class DictionaryParser
     protected $tmp_file;
     protected $entry, $reading, $kanji, $sense;
     
+    /**
+     * start_element_handler() wrapper
+     *
+     * @param resource $parser   The native parser resource
+     * @param resource $name   The elements name
+     * @param array $attribs   The elements attributes
+     * 
+     * @return void
+     */
+    public abstract function start_element_handler(resource $parser, string $name, array $attribs);
+    
+    /**
+     * end_element_handler() wrapper
+     *
+     * @param resource $parser   The native parser resource
+     * @param resource $name   The elements name
+     * 
+     * @return void
+     */
+    public abstract function end_element_handler(resource $parser, string $name);
+    
+    /**
+     * character_data_handler() wrapper
+     *
+     * @param resource $parser   The native parser resource
+     * @param resource $name   The character data
+     * 
+     * @return void
+     */
+    public abstract function character_data_handler(resource $parser, string $data);
+    
+    /**
+     * Return an array of the parser pass functions that need to be called as part of the parsing process
+     * 
+     * @return array An array of function names
+     */
     public function get_parser_passes()
     {
         return array("parser_pass_1");
     }
     
+    /**
+     * Constructor.
+     *
+     * @param FileResource $file   The JMDict file
+     * @param DTD $dtd   The parsed DTD
+     * @param JMDictDBInterface $jmdb   The db layer
+     * @param Logger $logger   For logging import actions
+     */
     public function __construct(FileResource $file, DTD $dtd, JMDictDBInterface $jmdb, Logger $logger)
     {
         global $options;
@@ -66,7 +115,7 @@ abstract class DictionaryParser
         $this->dtd->elements = $elements;
         unset($elements);
 
-        //we need the strlen of the longest entity name, see below
+        //we need the strlen of the longest entity name for later use
         $entity_names = array_column($this->dtd->entities, 'name');
         array_walk($entity_names, function($value, $index){
             if(strlen($value) > strlen($this->longest_entity_name))
@@ -86,6 +135,13 @@ abstract class DictionaryParser
         $this->entity_regexp_pattern .= ");/ixsm";
     }
     
+    /**
+     * Validate input data as an int
+     * 
+     * @param mixed $data The input data
+     * 
+     * @return false|int An integer if input is valid, false otherwise
+     */
     protected function validate_int($data)
     {
         if(is_string($data) && $data === "")
@@ -96,10 +152,17 @@ abstract class DictionaryParser
         return intval(trim($data));
     }
 
-
-    //TODO sanatize for SQL injection
-    //todo right now validate_int() does not log an errors but this function does. need consistent behaviour
-    protected function validate_string($data, $can_be_empty = false)
+    /**
+     * Validate input data as a string
+     * 
+     * @param mixed $data The input data
+     * @param bool $can_be_empty Whether or not the input data can be empty
+     * 
+     * @return false|int An integer if input is valid, false otherwise
+     * 
+     * @todo validate_int() does not log any errors but this function does. need consistent behaviour
+     */
+    protected function validate_string($data, bool $can_be_empty = false)
     {
         global $config;
         
@@ -121,6 +184,13 @@ abstract class DictionaryParser
         return $data;
     }
     
+    /**
+     * The main parser pass.
+     * 
+     * @return void
+     * 
+     * @throws LibXMLError
+     */
     final public function parser_pass_1()
     {
         global $config;
@@ -322,10 +392,16 @@ abstract class DictionaryParser
     }
     
     
-    protected function replace_entity_tags($text, $strip_tags_completely = false)
+    /**
+     * Strips pairs of delimiting tags
+     * 
+     * @param string $text The input string
+     * 
+     * @return string The input string with tags stripped
+     */
+    protected function strip_entity_tags(string $text)
     {
-        $replacement = $strip_tags_completely ? "\\1" : "&\\1;";
-        return preg_replace("/ ".static::$ENTITY_ID." (.*) ".static::$ENTITY_ID." /xu", $replacement, $text);
+        return preg_replace("/ ".static::$ENTITY_ID." (.*) ".static::$ENTITY_ID." /xu", "\\1", $text);
     }
 }
 

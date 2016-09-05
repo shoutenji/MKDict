@@ -5,11 +5,8 @@ namespace MKDict\v1\Database;
 use MKDict\Database\JMDictDBInterface;
 use MKDict\Database\DBConnection;
 use MKDict\Database\DBError;
-use MKDict\Logger\Logger;
 use MKDict\Security\Security;
 
-//todo make all version_id args optional, use $this->version id by default
-//tood this class shouldn't do any logging
 class JMDictDB implements JMDictDBInterface
 {
     protected $db_conn;
@@ -38,13 +35,12 @@ class JMDictDB implements JMDictDBInterface
     protected $stagrs_buffer;
     protected $stagks_buffer;
     
-    public function __construct(DBConnection $db_conn, int $version_id, Logger $logger = null)
+    public function __construct(DBConnection $db_conn, int $version_id)
     {
         global $config;
         
         $this->db_conn = $db_conn;
         $this->version_id = $version_id;
-        $this->logger = $logger;
         $this->uid_counter = 0;
         
         $this->entry_buffer = array();
@@ -73,7 +69,7 @@ class JMDictDB implements JMDictDBInterface
         );
     }
     
-    public function get_entry_uids(string $sequence_ids_flat)
+    public function get_entries($sequence_ids_flat, $version_id = 0, $fetch_style = "", $order_by = "", $fields = array())
     {
         global $config;
         
@@ -1217,7 +1213,6 @@ class JMDictDB implements JMDictDBInterface
 
         if(empty($pre_results))
         {
-            //$this->logger->k_or_r_search_failure($stringv, $sense_index);
             return false;
         }
 
@@ -1257,7 +1252,6 @@ class JMDictDB implements JMDictDBInterface
 
         if(empty($results))
         {
-            //$this->logger->k_or_r_search_failure($stringv, $sense_index);
             return false;
         }
 
@@ -1284,7 +1278,6 @@ class JMDictDB implements JMDictDBInterface
 
         if(empty($pre_results))
         {
-            //$this->logger->k_and_r_search_failure($kanji_binary, $reading_binary, $sense_index);
             return false;
         }
 
@@ -1321,7 +1314,6 @@ class JMDictDB implements JMDictDBInterface
 
         if(empty($results))
         {
-            //$this->logger->k_and_r_search_failure($kanji_binary, $reading_binary, $sense_index);
             return false;
         }
 
@@ -1464,7 +1456,7 @@ class JMDictDB implements JMDictDBInterface
         return $this->db_conn->fetchAll(\PDO::FETCH_ASSOC | \PDO::FETCH_GROUP);
     }
 
-    public function get_senses($entry_uids_flat, $version_id, $fetch_style = \PDO::FETCH_ASSOC | \PDO::FETCH_GROUP, $order_by = "entry_uid")
+    public function get_senses($entry_uids_flat, $version_id, $fetch_style = \PDO::FETCH_ASSOC | \PDO::FETCH_GROUP, $order_by = "entry_uid", $fields)
     {
         global $config;
 

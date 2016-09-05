@@ -1,10 +1,6 @@
-1)grep to find code where exceptions' constructors are not used properly
-2)search for $mk_exceptions and $pdo and delete them
 3)make changes to fileinfo class, see comments
-4)mysql transactions that are cancelled do not reverse changes in the auto_increment value
 5)fill out jmdbinterface interface
 6)test duplicate sequence ids
 7)reading and writing to the tmp directory is not secure
-8)get a reference to the logger in the main exception handler so that fatal errors can invoke a log flush before php terminates
 9)need a printable function for printing objects to the log file or stdout
-10)unify the sequence_id buffer functionality into an OOP component
+10)unicode decomp/recomp edge cases as well as hangul recomposition needs to be tested

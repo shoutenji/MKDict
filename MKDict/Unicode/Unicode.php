@@ -4,6 +4,12 @@ namespace MKDict\Unicode;
 
 use MKDict\FileResource\GZFileResource;
 
+/**
+ * Basic class for handling standard Unicode routines such as normalization and case folding. Based off Unicode 7.0
+ * For reference documentation, check the unicode standard http://www.unicode.org/versions/Unicode7.0.0/
+ *
+ * @author Taylor B <taylorbrontario@riseup.net>
+ */
 class Unicode
 {
     const UNICODE_DECOMPOSITION_CANONICAL = 0;
@@ -42,9 +48,9 @@ class Unicode
      *
      * Verifies if the text content conforms to the UTF-8 scheme defined in http://www.unicode.org/versions/Unicode7.0.0/ch03.pdf 
      * definition #D92 by analyzing the bit distributions. See tables 3-6 and 3-7.
-     * Ignores the unicode BOM character U+FEFF if present (which would be an error).
+     * Ignores the unicode BOM character U+FEFF if present (which would be an error for UTF-8).
      *
-     * @param GZFileResource $file A file handle opened by gzopen()
+     * @param GZFileResource $file A file resource representing a compressed file
      *
      * @return boolean True if text content is valid UTF-8 false otherwise
      */
@@ -244,11 +250,11 @@ class Unicode
      * PHP strings are stored as byte sequences.
      *
      * @param string $text The string to dump
-     * @param boolean $output_raw True to precede each nibble with a '\x' literal ie "EF6D" or "\xEF\x6D"
+     * @param bool $output_raw true to precede each nibble with a '\x' literal ie "EF6D" or "\xEF\x6D"
      *
      * @return string The hexdump as a string
      */
-    public static function hexdump($text, $output_raw=false)
+    public static function hexdump(string $text, bool $output_raw=false)
     {
         $val = "";
         
@@ -270,7 +276,7 @@ class Unicode
     }
     
     /**
-     * Get the Unicode Scalar Point from a UTF-8 char
+     * Get the Unicode Scalar Point from a UTF-8 encoded char
      *
      * Converts a valid UTF-8 byte sequence into its corresponding Unicode Scalar Point representation
      * 
@@ -278,7 +284,7 @@ class Unicode
      *
      * @return int The Unicode Scalar Point as an integer
      */
-    public static function utf8_utf($chr)
+    public static function utf8_utf(string $chr)
     {
         switch (strlen($chr))
         {
@@ -305,11 +311,11 @@ class Unicode
      * Returns a valid UTF-8 byte sequence representing the provided Unicode Scalar Point as an integer, a character literal, or the hexdump as a string
      * 
      * @param string|int $cp The unicode scalar code point
-     * @param string $format The representation of the code point you want. Values are "int", "char", or "byte_string"
+     * @param string $format The representation of the code point you want. Values are "int", "char", or "byte"
      *
      * @return mixed The UTF-8 value as an int, a regular string, or as a hexdump
      */
-    public static function utf_to_utf8($cp, $format="byte_string")
+    public static function utf_to_utf8($cp, string $format="byte")
     {
         if(is_string($cp))
         {
@@ -363,7 +369,7 @@ class Unicode
             }
             return $char_value;
         }
-        else if(strtolower($format) === "byte_string")
+        else if(strtolower($format) === "byte")
         {
             $byte_value = "";
             foreach(array_reverse($bytes) as $byte)
@@ -387,7 +393,7 @@ class Unicode
      *
      * @return string The input string with the replacement made
      */
-    public static function mb_substr_replace($text, $replacement, $start, $length=0)
+    public static function mb_substr_replace(string $text, string $replacement, int $start, int $length=0)
     {
         //TODO remove the +1
         return mb_substr($text, 0, $start) . $replacement . mb_substr($text, $start + $length + 1);
@@ -432,11 +438,11 @@ class Unicode
      * See http://www.unicode.org/versions/Unicode7.0.0/ch03.pdf section 3.11 Normalization form
      * 
      * @param string $text The valid UTF-8 string to decompose
-     * @param string $type The decomposition type. Either UNICODE_DECOMPOSITION_CANONICAL or UNICODE_DECOMPOSITION_COMPATIBILITY
+     * @param int $type The decomposition type. Either UNICODE_DECOMPOSITION_CANONICAL or UNICODE_DECOMPOSITION_COMPATIBILITY
      *
      * @return string The decomposed string
      */
-    public static function utf8_decompose($text, $type = self::UNICODE_DECOMPOSITION_CANONICAL)
+    public static function utf8_decompose(string $text, int $type = self::UNICODE_DECOMPOSITION_CANONICAL)
     {
         global $config;
         
@@ -532,13 +538,13 @@ class Unicode
      * See http://www.unicode.org/versions/Unicode7.0.0/ch03.pdf section 3.11 Normalization form
      * 
      * @param string $text The valid UTF-8 string to recompose
-     * @param string $type The decomposition type that was used prior. Either UNICODE_DECOMPOSITION_CANONICAL or UNICODE_DECOMPOSITION_COMPATIBILITY
+     * @param int $type The decomposition type that was used prior. Either UNICODE_DECOMPOSITION_CANONICAL or UNICODE_DECOMPOSITION_COMPATIBILITY
      *
      * @return string The recomposed string
      * 
      * @TODO test hangul recomposition
      */
-    public static function utf8_recompose($text, $type = self::UNICODE_DECOMPOSITION_CANONICAL)
+    public static function utf8_recompose(string $text, int $type = self::UNICODE_DECOMPOSITION_CANONICAL)
     {
         global $config;
         
@@ -617,7 +623,7 @@ class Unicode
      *
      * @return string The case-folded string
      */
-    public static function casefold($text)
+    public static function casefold(string $text)
     {
         global $config;
         
@@ -639,7 +645,7 @@ class Unicode
      *
      * @return string The case-folded string
      */
-    public static function nfd_casefold($text)
+    public static function nfd_casefold(string $text)
     {
         return self::nfd(self::casefold(self::nfd($text)));
     }
@@ -657,7 +663,7 @@ class Unicode
      *
      * @return string The case-folded string
      */
-    public static function nfkd_casefold($text)
+    public static function nfkd_casefold(string $text)
     {
         return self::nfkd(self::casefold(self::nfkd(self::casefold(self::nfd($text)))));
     }
@@ -676,7 +682,7 @@ class Unicode
      *
      * @return string The decomposed string
      */
-    private static function nfd($text)
+    private static function nfd(string $text)
     {
         return self::utf8_decompose($text);
     }
@@ -695,7 +701,7 @@ class Unicode
      *
      * @return string The decomposed string
      */
-    private static function nfkd($text)
+    private static function nfkd(string $text)
     {
         return self::utf8_decompose($text, self::UNICODE_DECOMPOSITION_COMPATIBILITY);
     }
@@ -714,7 +720,7 @@ class Unicode
      *
      * @return string The composed string
      */
-    private static function nfc($text)
+    private static function nfc(string $text)
     {
         return self::utf8_recompose(self::utf8_decompose($text));
     }
@@ -733,7 +739,7 @@ class Unicode
      *
      * @return string The composed string
      */
-    private static function nfkc($text)
+    private static function nfkc(string $text)
     {
         return self::utf8_recompose(self::utf8_decompose($text, self::UNICODE_DECOMPOSITION_COMPATIBILITY), self::UNICODE_DECOMPOSITION_COMPATIBILITY);
     }
@@ -745,12 +751,12 @@ class Unicode
      * specified, then all text is normalized.
      * 
      * @param string $text The valid UTF-8 string to decompose
-     * @param string $mode Which Unicode normal form to use
+     * @param int $mode Which Unicode normal form to use
      * @param string $entity The markup delimiter
      *
      * @return string The composed string
      */
-    public static function normalize_text($text, $mode, $entity = "")
+    public static function normalize_text(string $text, int $mode, string $entity = "")
     {
         switch($mode)
         {

@@ -5,7 +5,16 @@ namespace MKDict\Unicode;
 use MKDict\Unicode\Unicode;
 use MKDict\Unicode\Exception\UnicodeTestCaseFailure;
 
-//test cases come from http://www.unicode.org/reports/tr15/tr15-41.html#Examples
+/**
+ * Limited test cases for class Unicode. These cases come from the official Unicode http://www.unicode.org/reports/tr15/tr15-41.html#Examples
+ * 
+ * @see MKDict\Unicode\Unicode
+ *
+ * @author Taylor B <taylorbrontario@riseup.net>
+ * 
+ * @todo this class needs more testing: edge cases, randomization mixing of valid and invalid unicode, etc.
+ * @todo hangul recomposition not tested
+ */
 class UnicodeTest
 {
     protected $D = "\x44";
@@ -34,14 +43,33 @@ class UnicodeTest
     protected $hw_ka = "\xEF\xBD\xB6";
     protected $hw_ten = "\xEF\xBE\x9E";
     
+    /**
+     * Run unicode tests
+     *
+     * Excute various unicode test metrics
+     *
+     * @return void
+     */
     public function run_tests()
     {
         $this->test_nfd();
         $this->test_nfkd();
         $this->test_nfc();
         $this->test_nfkc();
+        $this->test_case_fold();
     }
     
+    /**
+     * Test implementation of Unicode's NFD algorithm.
+     *
+     * NFD = Canonical Decomposition
+     *
+     * @throws UnicodeTestCaseFailure if decomposition result fails to match the correct value
+     * 
+     * @see http://www.unicode.org/reports/tr15/tr15-41.html Unicode Standard Annex 7.0 #15 Normalization Forms
+     * 
+     * @return void
+     */
     public function test_nfd()
     {
         $nfd = array(
@@ -75,7 +103,7 @@ class UnicodeTest
             $decomp = Unicode::utf8_decompose($test_value);
             if($decomp !== $test_result)
             {
-                throw new UnicodeTestCaseFailure(debug_backtrace(),
+                throw new UnicodeTestCaseFailure(
                     array(
                         "index" => $i,
                         "input_literal" => $test_value,
@@ -90,6 +118,17 @@ class UnicodeTest
         }
     }
     
+    /**
+     * Test implementation of Unicode's NFKD algorithm.
+     *
+     * NFKD = Compatibility Decomposition
+     *
+     * @throws UnicodeTestCaseFailure if decomposition result fails to match the correct value
+     * 
+     * @see http://www.unicode.org/reports/tr15/tr15-41.html Unicode Standard Annex 7.0 #15 Normalization Forms
+     * 
+     * @return void
+     */
     public function test_nfkd()
     {
         $nfkd = array(
@@ -123,7 +162,7 @@ class UnicodeTest
             $decomp = Unicode::utf8_decompose($test_value, Unicode::UNICODE_DECOMPOSITION_COMPATIBILITY);
             if($decomp !== $test_result)
             {
-                throw new UnicodeTestCaseFailure(debug_backtrace(),
+                throw new UnicodeTestCaseFailure(
                     array(
                         "index" => $i,
                         "input_literal" => $test_value,
@@ -138,6 +177,17 @@ class UnicodeTest
         }
     }
     
+    /**
+     * Test implementation of Unicode's NFC algorithm.
+     *
+     * NFC = Canonical Decomposition, followed by Canonical Recomposition.
+     *
+     * @throws UnicodeTestCaseFailure if decomposition result fails to match the correct value
+     * 
+     * @see http://www.unicode.org/reports/tr15/tr15-41.html Unicode Standard Annex 7.0 #15 Normalization Forms
+     * 
+     * @return void
+     */
     public function test_nfc()
     {
         $nfc = array(
@@ -171,7 +221,7 @@ class UnicodeTest
             $decomp = Unicode::utf8_recompose(Unicode::utf8_decompose($test_value));
             if($decomp !== $test_result)
             {
-                throw new UnicodeTestCaseFailure(debug_backtrace(),
+                throw new UnicodeTestCaseFailure(
                     array(
                         "index" => $i,
                         "input_literal" => $test_value,
@@ -186,6 +236,17 @@ class UnicodeTest
         }
     }
     
+    /**
+     * Test implementation of Unicode's NFKC algorithm.
+     *
+     * NFKC = Compatibility Decomposition, followed by Canonical Recomposition.
+     *
+     * @throws UnicodeTestCaseFailure if decomposition result fails to match the correct value
+     * 
+     * @see http://www.unicode.org/reports/tr15/tr15-41.html Unicode Standard Annex 7.0 #15 Normalization Forms
+     * 
+     * @return void
+     */
     public function test_nfkc()
     {
         $nfkc = array(
@@ -219,7 +280,7 @@ class UnicodeTest
             $decomp = Unicode::utf8_recompose(Unicode::utf8_decompose($test_value, Unicode::UNICODE_DECOMPOSITION_COMPATIBILITY), Unicode::UNICODE_DECOMPOSITION_COMPATIBILITY);
             if($decomp !== $test_result)
             {
-                throw new UnicodeTestCaseFailure(debug_backtrace(),
+                throw new UnicodeTestCaseFailure(
                     array(
                         "index" => $i,
                         "input_literal" => $test_value,
@@ -234,7 +295,18 @@ class UnicodeTest
         }
     }
     
-    public function test_case()
+    /**
+     * Test implementation of Unicode's Default Case Folding algorithm
+     *
+     * A casefolding algorithm generalized to Unicode's character set
+     *
+     * @throws UnicodeTestCaseFailure if decomposition result fails to match the correct value
+     * 
+     * @see http://www.unicode.org/versions/Unicode7.0.0/ch03.pdf The Unicode Standard, Chapter 3 Conformance, Section 13 Default Case Algorithms
+     * 
+     * @return void
+     */
+    public function test_case_fold()
     {
         $case = array(
             "D" => "d",
@@ -248,7 +320,7 @@ class UnicodeTest
             $decomp = Unicode::casefold($test_value);
             if($decomp !== $test_result)
             {
-                throw new UnicodeTestCaseFailure(debug_backtrace(),
+                throw new UnicodeTestCaseFailure(
                     array(
                         "index" => $i,
                         "input_literal" => $test_value,

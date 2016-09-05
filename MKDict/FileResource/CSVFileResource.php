@@ -2,15 +2,26 @@
 
 namespace MKDict\FileResource;
 
-use MKDict\FileResource\PlainTextFileResource;
+use MKDict\FileResource\ByteStreamFileResource;
 use MKDict\FileResource\CSVIterator;
 use MKDict\FileResource\FileInfo;
 use MKDict\FileResource\Exception\FReadFailureException;
 
-class CSVFileResource extends PlainTextFileResource implements \IteratorAggregate
+/**
+ * A file resource class representing a CSV file. Some options for this file are set in the FileInfo class.
+ * 
+ * @author Taylor B <taylorbrontario@riseup.net>
+ */
+class CSVFileResource extends ByteStreamFileResource implements \IteratorAggregate
 {
-    //don't hold the iterator in memory
-    //todo since we aren't holding this iterator in memory, shouldn't we make this method static?
+    /**
+     * Get the iterator
+     * 
+     * @return CSVIterator The iterator object
+     * @throws FReadFailureException if the file can't be read
+     * 
+     * @todo this code should be moved to the CSVIteraor class and take options to act as a filter
+     */
     public function getIterator()
     {
         $data = array();

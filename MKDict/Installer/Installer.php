@@ -6,7 +6,7 @@ use MKDict\Command\CommandArgs;
 use MKDict\Logger\InstallLogger;
 use MKDict\FileResource\FileInfo;
 use MKDict\FileResource\Url;
-use MKDict\FileResource\PlainTextFileResource;
+use MKDict\FileResource\ByteStreamFileResource;
 use MKDict\FileResource\CSVFileResource;
 use MKDict\FileResource\PHPFileResource;
 use MKDict\Unicode\Unicode;
@@ -269,13 +269,13 @@ class Installer
                     'timeout'   =>  120,
                 )
             ));
-            $remote_data_file = new PlainTextFileResource($remote_file_info);
+            $remote_data_file = new ByteStreamFileResource($remote_file_info);
             $remote_data_file->open();
             
             //the local unicode data file (that we are creating)
             $local_file_info = new FileInfo($file_info['name'], $config['data_dir']);
             $local_file_info->set_mode("w");
-            $local_data_file = new PlainTextFileResource($local_file_info);
+            $local_data_file = new ByteStreamFileResource($local_file_info);
             $local_data_file->open();
             
             //download the remote file into the local file

@@ -2,12 +2,24 @@
 
 namespace MKDict\FileResource;
 
-use MKDict\FileResource\PlainTextFileResource;
+use MKDict\FileResource\ByteStreamFileResource;
 use MKDict\FileResource\FileInfo;
 use MKDict\Security\Security;
 
-class LogFileResource extends PlainTextFileResource
+/**
+ * A file resource class representing a log file
+ * 
+ * @see MKDict\FileResource\FileResource
+ *
+ * @author Taylor B <taylorbrontario@riseup.net>
+ */
+class LogFileResource extends ByteStreamFileResource
 {
+    /**
+     * Constructor
+     * 
+     * @param string $logfile_type
+     */
     public function __construct(string $logfile_type = "")
     {
         global $config;

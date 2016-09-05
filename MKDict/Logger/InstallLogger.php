@@ -4,13 +4,30 @@ namespace MKDict\Logger;
 
 use MKDict\Logger\Logger;
 
+/**
+ * A logging class
+ * 
+ * @author Taylor B <taylorbrontario@riseup.net>
+ * 
+ * @todo make different log formats for first time imports and all successive imports
+ */
 class InstallLogger extends Logger
 {
+    /**
+     * Constructor
+     * 
+     * @return void
+     */
     public function __construct()
     {
         parent::__construct("install");
     }
     
+    /**
+     * Write log messages to file
+     * 
+     * @return void
+     */
     public function flush()
     {
         $this->finish_time = time();
