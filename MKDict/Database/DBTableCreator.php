@@ -5,12 +5,24 @@ namespace MKDict\Database;
 use MKDict\Database\Exception\DBConnectionError;
 use MKDict\Database\DBConnection;
 
+/**
+ * A convenienve class for creating tables in the db
+ * 
+ * @author Taylor B <taylorbrontario@riseup.net>
+ */
 class DBTableCreator
 {
     protected $statement, $tablename, $engine_type, $columns, $connection, $table_error;
         
     const DEFAULT_ENGINE_TYPE = "INNODB";
 
+    /**
+     * Constructor
+     * 
+     * @param DBConnection $db_conn
+     * @param string $tablename
+     * @param string $engine_type
+     */
     public function __construct(DBConnection $db_conn, string $tablename, string $engine_type = self::DEFAULT_ENGINE_TYPE)
     {
         $this->connection = $db_conn;
@@ -19,17 +31,40 @@ class DBTableCreator
         $this->columns = array();
     }
 
-    public function add_column($column_name, $data_type, $default = "", $nullability = "NOT NULL", $keyability = "", $auto_increment = "")
+    /**
+     * Add a column to the table
+     * 
+     * @param string $column_name
+     * @param string $data_type
+     * @param string $default
+     * @param string $nullability
+     * @param string $keyability
+     * @param string $auto_increment
+     */
+    public function add_column(string $column_name, string $data_type, string $default = "", string $nullability = "NOT NULL", string $keyability = "", string $auto_increment = "")
     {
         $this->columns[] = array('column_name' => $column_name, 'data_type' => $data_type, 'default' => $default, 'nullability' => $nullability, 'keyability' => $keyability, 'auto_increment' => $auto_increment);
     }
 
-    public function add_foriegn_key($column_name, $referenced_table, $referenced_column_name)
+    /**
+     * Add a foriegn key to the table
+     * 
+     * @param string $column_name
+     * @param string $referenced_table
+     * @param string $referenced_column_name
+     */
+    public function add_foriegn_key(string $column_name, string $referenced_table, string $referenced_column_name)
     {
         $this->columns[] = array('foreign_key' => true, 'column_name' => $column_name, 'referenced_table' => $referenced_table, 'referenced_column_name' => $referenced_column_name);
     }
 
-    public function add_key($index_type, $column_names)
+    /**
+     * Add a key to the table
+     * 
+     * @param string $index_type
+     * @param string $column_names
+     */
+    public function add_key(string $index_type, string $column_names)
     {
         if(is_array($column_names))
         {
@@ -38,6 +73,11 @@ class DBTableCreator
         $this->columns[] = array('index_type' => $index_type, 'column_name' => $column_names);
     }
 
+    /**
+     * Create the table
+     * 
+     * @throws DBConnectionError
+     */
     public function create()
     {
         if(empty($this->connection))
@@ -77,6 +117,9 @@ class DBTableCreator
         //$this->check_table_error();
     }
 
+    /**
+     * 
+     */
     public function check_table_error()
     {
     }

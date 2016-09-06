@@ -4,19 +4,18 @@ namespace MKDict\Database\Exception;
 
 use MKDict\Exception\FatalException;
 
-//todo this class hasn't been properly refactored
 class DBConnectionError extends FatalException
 {
-    public $table;
+    protected $msg;
     
-    public function __construct()
+    public function __construct($msg = "")
     {
-        $this->table = $table;
+        $this->msg = $msg;
         parent::__construct(debug_backtrace());
     }
     
     public function get_message()
     {
-        return "\n" . $this->colorize_text(ltrim(strrchr(__CLASS__, '\\'),'\\')) . "\nTrace:\n" . print_r($this->get_stack_trace(),true);
+        return "\n" . $this->colorize_text(ltrim(strrchr(__CLASS__, '\\'),'\\')) . "\n\nMessage:\n$this->msg\n" . "\nTrace:\n" . print_r($this->get_stack_trace(),true);
     }
 }

@@ -6,6 +6,11 @@ use MKDict\Database\Exception\DBConnectionError;
 use MKDict\Database\Exception\DBError;
 use MKDict\Security\Security;
 
+/**
+ * A PDO wrapper
+ * 
+ * @author Taylor B <taylorbrontario@riseup.net>
+ */
 class DBConnection
 {
     protected $pdo, $statement;
@@ -18,6 +23,15 @@ class DBConnection
     const MK_PDO_QUERIED = 16;
     const MK_PDO_EXED = 32;
 
+    /**
+     * Constructor
+     * 
+     * @param string $dsn DSN string
+     * @param string $user DB username
+     * @param string $pass DB password
+     * 
+     * @throws DBConnectionError
+     */
     public function __construct(string $dsn, string $user, string $pass)
     {
         try
@@ -39,45 +53,72 @@ class DBConnection
         }
         catch(\PDOException $e)
         {
-            throw new DBConnectionError($dsn, $user, $e->getMessage());
+            throw new DBConnectionError($e->getMessage());
         }
     }
 
+    /**
+     * Start a MYSQL transaction
+     * 
+     * @throws DBConnectionError
+     */
     public function start_transaction()
     {
         if(!$this->pdo)
         {
-            throw new DBConnectionError($dsn, $user, __METHOD__." was called but no database connection has been established.");
+            throw new DBConnectionError(__METHOD__." was called but no database connection has been established.");
         }
         $this->pdo->beginTransaction();
     }
 
+    /**
+     * Roll back transaction
+     * 
+     * @throws DBConnectionError
+     */
     public function roll_back()
     {
         if(!$this->pdo)
         {
-            throw new DBConnectionError($dsn, $user, __METHOD__." was called but no database connection has been established.");
+            throw new DBConnectionError( __METHOD__." was called but no database connection has been established.");
         }
         $this->pdo->rollBack();
     }
 
-    public function null_check($field)
+    /**
+     * Check if a field is null
+     * 
+     * @param string $field
+     * 
+     * @return string A SQL boolean expression checking if the field is null
+     */
+    public function null_check(string $field)
     {
         return " $field IS NULL "; 
     }
     
-    //todo this function must yield save values for the sql's IN() statement
-    //todo try to break this function
+    /**
+     * Safely flatten an array for use in an IN() clause
+     * 
+     * @param array $ary
+     * @param string $type The type to coerce too
+     * 
+     * @return string The flattened array
+     */
     public static function flatten_array(array $ary, string $type = "int")
     {
         return Security::flatten_array($ary, $type);
     }
 
-    //TODO this is a sloppy way to implement a version check because it still requires a bindValue() call afterwords
-    //TODO if you aren't going to change this, at least write a comment to explain what placeholders need to be bound
-    //TODO you could return an array with the first index the string, and the second index the param names that need to be bound
-    //if you use a column prefix you must bind the appropriate values. see JMDictDB::k_and_r_search()
-    public function version_check($column_prefix = "")
+    /**
+     * Does a version check
+     * 
+     * @param type $column_prefix
+     * @return string The checked versioned
+     * 
+     * @todo store the column name in a class property and autobind the values before execution, that way the user doesn't have to take care of binding
+     */
+    public function version_check(string $column_prefix = "")
     {
         $placeholder_prefix = "";
         if(!empty($column_prefix))
@@ -91,6 +132,11 @@ class DBConnection
         return " ( " . $this->null_check("{$column_prefix}version_removed_id") . " OR {$column_prefix}version_removed_id>:{$placeholder_prefix}version_removed_id ) AND ( {$column_prefix}version_added_id<=:{$placeholder_prefix}version_added_id) ";
     }
 
+    /**
+     * Wrapper for PDOStatement::debugDumpParams()
+     * 
+     * @return array|boolean The result of PDOStatement::debugDumpParams() or false otherwise
+     */
     public function debugDumpParams()
     {
         if(!empty($this->statement))
@@ -107,17 +153,35 @@ class DBConnection
         }
     }
 
-    public function getAttribute($attr_name)
+    /**
+     * Get a PDO attribute
+     * 
+     * @param string $attr_name
+     * @return mixed
+     */
+    public function getAttribute(string $attr_name)
     {
         return $this->pdo->getAttribute($attr_name);
     }
 
-    public function setAttribute($attr_name, $attr_value)
+    /**
+     * Set a PDO attribute
+     * 
+     * @param string $attr_name
+     * @param string $attr_value
+     */
+    public function setAttribute(string $attr_name, string $attr_value)
     {
         $this->pdo->setAttribute($attr_name, $attr_value);
     }
 
-    public function exec($stmnt)
+    /**
+     * Wrapper for PDO::exec()
+     * 
+     * @param string $stmnt
+     * @throws DBError
+     */
+    public function exec(string $stmnt)
     {
         if(false === $this->pdo->exec($stmnt))
         {
@@ -126,7 +190,13 @@ class DBConnection
         $this->status = $this::MK_PDO_EXED;
     }
 
-    public function query($stmnt)
+    /**
+     * Wrapper for PDO::query()
+     * 
+     * @param string $stmnt
+     * @throws DBError
+     */
+    public function query(string $stmnt)
     {
         if(false === $result = $this->pdo->query($stmnt))
         {
@@ -139,12 +209,24 @@ class DBConnection
         }
     }
 
-    protected function status_is($status_flag)
+    /**
+     * Used for maintaining a valid internal state
+     * 
+     * @param int $status_flag
+     * @return type
+     */
+    protected function status_is(int $status_flag)
     {
         return (bool) ($this->status & $status_flag);
     }
 
-    public function execute($params = null)
+    /**
+     * Wrapper for PDOStatement::execute()
+     * 
+     * @param array $params
+     * @throws DBError
+     */
+    public function execute(array $params = null)
     {
         global $options;
         
@@ -163,7 +245,16 @@ class DBConnection
         $this->status = $this::MK_PDO_EXECUTED;
     }
 
-    public function fetchAll($fetchstyle)
+    /**
+     * Wrapper for PDOStatement::fetchAll()
+     * 
+     * @param int $fetchstyle
+     * 
+     * @return array
+     * 
+     * @throws DBError
+     */
+    public function fetchAll(int $fetchstyle)
     {
         global $options;
         
@@ -189,7 +280,16 @@ class DBConnection
     }
 
 
-    public function fetch($fetchstyle)
+    /**
+     * Wrapper for PDOStatement::fetch()
+     * 
+     * @param int $fetchstyle
+     * 
+     * @return array
+     * 
+     * @throws DBError
+     */
+    public function fetch(int $fetchstyle)
     {
         global $options;
         
@@ -214,7 +314,14 @@ class DBConnection
         }
     }
 
-    public function prepare($stmnt)
+    /**
+     * Wrapper for PDOStatement::prepare()
+     * 
+     * @param string $stmnt
+     * 
+     * @throws DBError
+     */
+    public function prepare(string $stmnt)
     {
         try
         {
@@ -227,7 +334,16 @@ class DBConnection
         }
     }
 
-    public function bindValue($parameter, $value, $data_type)
+    /**
+     * Wrapper for PDOStatement::bindValue()
+     * 
+     * @param string $parameter
+     * @param mixed $value
+     * @param int $data_type
+     * 
+     * @throws DBError
+     */
+    public function bindValue(string $parameter, $value, int $data_type)
     {
         global $options;
         
@@ -246,7 +362,16 @@ class DBConnection
         $this->status = $this::MK_PDO_VALUE_BINDED;
     }
 
-    public function bindParam($parameter, &$variable, $data_type)
+    /**
+     * Wrapper for PDOStatement::bindParam()
+     * 
+     * @param string $parameter
+     * @param mixed $value
+     * @param int $data_type
+     * 
+     * @throws DBError
+     */
+    public function bindParam(string $parameter, &$variable, int $data_type)
     {
         global $options;
         
@@ -265,6 +390,11 @@ class DBConnection
         $this->status = $this::MK_PDO_VALUE_BINDED;
     }
 
+    /**
+     * Wrapper for PDO::errorCode()
+     * 
+     * @return mixed
+     */
     public function error_code()
     {
         return $this->pdo->errorCode();

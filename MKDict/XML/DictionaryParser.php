@@ -32,8 +32,6 @@ abstract class DictionaryParser
      * @param resource $parser   The native parser resource
      * @param resource $name   The elements name
      * @param array $attribs   The elements attributes
-     * 
-     * @return void
      */
     public abstract function start_element_handler(resource $parser, string $name, array $attribs);
     
@@ -42,8 +40,6 @@ abstract class DictionaryParser
      *
      * @param resource $parser   The native parser resource
      * @param resource $name   The elements name
-     * 
-     * @return void
      */
     public abstract function end_element_handler(resource $parser, string $name);
     
@@ -52,8 +48,6 @@ abstract class DictionaryParser
      *
      * @param resource $parser   The native parser resource
      * @param resource $name   The character data
-     * 
-     * @return void
      */
     public abstract function character_data_handler(resource $parser, string $data);
     
@@ -138,7 +132,7 @@ abstract class DictionaryParser
     /**
      * Validate input data as an int
      * 
-     * @param mixed $data The input data
+     * @param string|int $data The input data
      * 
      * @return false|int An integer if input is valid, false otherwise
      */
@@ -155,7 +149,7 @@ abstract class DictionaryParser
     /**
      * Validate input data as a string
      * 
-     * @param mixed $data The input data
+     * @param string|int $data The input data
      * @param bool $can_be_empty Whether or not the input data can be empty
      * 
      * @return false|int An integer if input is valid, false otherwise

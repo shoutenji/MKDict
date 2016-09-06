@@ -16,7 +16,7 @@ use MKDict\Database\DBTableCreator;
 use MKDict\Database\Exception\DBError;
 use MKDict\Logger\ImportLogger;
 
-//todo to many rewind()'s for $jmdict_file, should rework this class to be handle 
+
 class Importer
 {
     public $db_conn;

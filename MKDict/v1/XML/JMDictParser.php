@@ -21,9 +21,12 @@ use MKDict\v1\Database\JMDictElementList;
 * The versioned parser for the JMDict dictionary.
 * 
 * @author Taylor B <taylorbrontario@riseup.net>
+ * 
+ * @todo the db layer already has a bufffer. probably no performance benefit to buffering here as well
 */
 class JMDictParser extends DictionaryParser
 {
+    /**@var string This property is late static binded from the parent. Every implementation of DictionaryParser must implement this variable */
     protected static $ENTITY_ID = 'd73ilHD34h8dyq';
     
     protected $attribs;
@@ -57,16 +60,38 @@ class JMDictParser extends DictionaryParser
     const ELEMENT_GLOSS_PRI = 'pri';
     const ELEMENT_JMDOCUMENT = 'JMdict';
     
+    /**
+     * Return an array of the parser pass functions that need to be called as part of the parsing process
+     * 
+     * @return array An array of function names
+     */
     public function get_parser_passes()
     {
         return array_merge(parent::get_parser_passes(), array("parser_pass_2"));
     }
 
+    /**
+     * character_data_handler() wrapper
+     *
+     * @param resource $parser   The native parser resource
+     * @param resource $name   The character data
+     * 
+     * @return void
+     */
     public function character_data_handler(resource $parser, string $data)
     {
         $this->character_buffer .= strval($data);
     }
 
+    /**
+     * start_element_handler() wrapper
+     *
+     * @param resource $parser   The native parser resource
+     * @param resource $name   The elements name
+     * @param array $attribs   The elements attributes
+     * 
+     * @return void
+     */
     public function start_element_handler(resource $parser, string $name, array $attribs)
     {
         global $options;
@@ -143,6 +168,14 @@ class JMDictParser extends DictionaryParser
     }
 
 
+    /**
+     * end_element_handler() wrapper
+     *
+     * @param resource $parser   The native parser resource
+     * @param resource $name   The elements name
+     * 
+     * @return void
+     */
     public function end_element_handler(resource $parser, string $name)
     {
         global $config;
@@ -299,7 +332,14 @@ class JMDictParser extends DictionaryParser
     }
 
 
-    protected function set_binary_fields(JMDictStringElement &$element)
+    /**
+     * Prepares raw data to be set as the binary fields of a text element
+     *
+     * @param JMDictStringElement $element   The XML element
+     * 
+     * @return void
+     */
+    protected function set_binary_fields(JMDictStringElement $element)
     {
         $binary_nfc = Unicode::normalize_text($element->binary_raw, Unicode::UTF_NORMALIZE_NFC, self::$ENTITY_ID);
         $element->binary_nfc = $element->binary_raw === $binary_nfc ? null : $binary_nfc;
@@ -320,8 +360,15 @@ class JMDictParser extends DictionaryParser
         $element->binary_nfkd_casefolded = $element->binary_raw === $binary_nfkd_casefolded ? null : $binary_nfkd_casefolded;
     }
 
-
-    protected function clean_raw_text($text, $can_be_empty = false)
+    /**
+     * Cleans up raw text
+     *
+     * @param string $text The input string
+     * @param bool $can_be_empty Whether or not the input string can be empty to be considered valid data
+     * 
+     * @return string
+     */
+    protected function clean_raw_text(string $text, bool $can_be_empty = false)
     {
         $result = $this->validate_string($text, $can_be_empty);
         if($result === false)
@@ -332,7 +379,11 @@ class JMDictParser extends DictionaryParser
         return $val;
     }
 
-
+    /**
+     * Validate the current entry
+     *
+     * @return bool True if the entry's data is valid, false otherwise
+     */
     protected function entry_validate()
     {
         if($this->entry->invalid_data)
@@ -379,12 +430,16 @@ class JMDictParser extends DictionaryParser
         return true;
     }
 
+    /**
+     * Insert the current entry into the db
+     *
+     * @return void
+     */
     protected function insert_entry()
     {
         //if the entry does not contain valid data, it's safe now to skip this entry's processing
         if(false === $this->entry_validate())
         {
-            echo "returning 1\n";
             return;
         }
 
@@ -413,11 +468,15 @@ class JMDictParser extends DictionaryParser
         }
     }
 
-    //TODO break this up into smaller functions
+    /**
+     * Write the merge buffer to the database
+     * 
+     * @return void
+     */
     protected function write_merge_buffer()
     {
         global $config;
-
+        
         $sequence_ids_flat = DBConnection::flatten_array(array_keys($this->entry_buffer));
 
         $entries = $this->jmdb->get_entries($sequence_ids_flat);
@@ -801,10 +860,13 @@ class JMDictParser extends DictionaryParser
         $this->entry_buffer = array();
     }
 
+    /**
+     * Merge current entry into the DB
+     */
     protected function merge_entry()
     {
         global $config;
-
+        
         $this->entry->sequence_id = $this->entry->sequence_id;
         $this->entry_buffer[$this->entry->sequence_id] = $this->entry;
 
@@ -814,7 +876,13 @@ class JMDictParser extends DictionaryParser
         }
     }
 
-    protected function insert_new_entry($entry = null)
+    /**
+     * Insert a new entry into the db
+     * 
+     * @param JMDictEntry $entry
+     * @return void
+     */
+    protected function insert_new_entry(JMDictEntry $entry = null)
     {
         if(empty($entry))
         {
@@ -910,13 +978,27 @@ class JMDictParser extends DictionaryParser
         return $entry->entry_uid;
     }
 
+    /**
+     * Compares to binarys strings for eqaulity
+     * 
+     * @param string $binary1 Input string
+     * @param string $binary2 Input string
+     * 
+     * @return bool True if the binary strings are equal, false otherwise
+     */
     protected function binary_compare($binary1, $binary2)
     {
         return $binary1 === $binary2 ? true : false;
     }
 
 
-    //TODO the flushing opreations need to be buffered
+    /**
+     * The parser pass of this class
+     * 
+     * @return void
+     * 
+     * @throws FileIOFailureException If reading temp file fails
+     */
     public function parser_pass_2()
     {
         global $config;
@@ -1055,6 +1137,11 @@ class JMDictParser extends DictionaryParser
         $this->jmdb->update_uid_counter();
     }
 
+    /**
+     * Write sequence_ids to temp file for later
+     * 
+     * @return void
+     */
     protected function write_sequence_ids_to_file()
     {
         $ids_flat = Security::flatten_array($this->sequence_ids);
