@@ -2,7 +2,8 @@
 A Japanese-English dictionary based off Jim Breen's JMDict http://www.edrdg.org/jmdict/j_jmdict.html
 
 ## Overview
-A stand alone PHP application that generates the database used in the Android app Manakyun. Running as a cron job, this app will download the latest JMDict file, parse it, and insert any changes relative to the previous version into the database.
+A stand alone PHP application that generates the database used in the Android app Manakyun. This app will download the latest
+JMDict file, parse it, and insert any changes relative to the previous version into the database.
 
 ## Features
 * Requires PHP 7.0
@@ -18,4 +19,5 @@ See the XSD document in the Exporter folder. One of the main advantages of this 
 
 
 ## JMDict Errors
-The main JMDict file has always had several errors upon each iteration, such as a cross reference that references a previously removed element. These errors are not propagated into the db.
+The main JMDict file has always had several errors upon each iteration, such as a cross reference that references a previously removed element.
+These errors are not propagated into the db.
