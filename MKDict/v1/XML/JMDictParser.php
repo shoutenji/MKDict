@@ -21,8 +21,8 @@ use MKDict\v1\Database\JMDictElementList;
 * The versioned parser for the JMDict dictionary.
 * 
 * @author Taylor B <taylorbrontario@riseup.net>
- * 
- * @todo the db layer already has a bufffer. probably no performance benefit to buffering here as well
+* 
+* @todo the db layer already has a bufffer. probably no performance benefit to buffering here as well
 */
 class JMDictParser extends DictionaryParser
 {
@@ -1096,7 +1096,6 @@ class JMDictParser extends DictionaryParser
 
         $this->jmdb->write_all_buffers(true);
         
-        //TODO check for duplicate sequence ids
         if($this->version_id > 1)
         {
             $this->write_merge_buffer();

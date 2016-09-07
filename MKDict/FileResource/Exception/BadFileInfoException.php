@@ -29,7 +29,9 @@ class BadFileInfoException extends FatalException
     }
     
     /**
-     * @return get string representation
+     * Get string representation
+     * 
+     * @return string
      */
     public function get_message()
     {

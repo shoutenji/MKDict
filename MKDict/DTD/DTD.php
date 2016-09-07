@@ -7,6 +7,11 @@ use MKDict\FileResource\FileResource;
 use MKDict\DTD\Canonicalizable;
 use MKDict\DTD\DTDParser;
 
+/**
+ * Class representing a DTD
+ * 
+ * @author Taylor B <taylorbrontario@riseup.net>
+ */
 class DTD implements Canonicalizable
 {
     public $raw;
@@ -23,6 +28,11 @@ class DTD implements Canonicalizable
     protected $file;
     protected $dtd_parser;
     
+    /**
+     * Constructor
+     * 
+     * @param FileResource $file The dictionary file
+     */
     public function __construct(FileResource $file = null)
     {
         if(!empty($file))
@@ -31,11 +41,21 @@ class DTD implements Canonicalizable
         }
     }
     
+    /**
+     * Check for two canonicalizable objects for equality
+     * 
+     * @param \MKDict\DTD\Canonicalizable $dtd
+     * 
+     * @return bool True if canonicalized forms are eqaul, false otherwise
+     */
     public function is_equal(Canonicalizable $dtd)
     {
         return $this->canonical === $dtd->canonical;
     }
     
+    /**
+     * @return void
+     */
     public function canonicalize()
     {
         $this->canonical = $this->dtd_parser->canonicalize();
@@ -46,12 +66,22 @@ class DTD implements Canonicalizable
         $this->entities = $this->dtd_parser->get_entities();
     }
     
+    /**
+     * Serialize returns canonical form as a string
+     * 
+     * @return string
+     */
     public function serialize()
     {
         return $this->canonical;
     }
     
-    public function unserialize($obj)
+    /**
+     * Unserialize
+     * 
+     * @param type $obj
+     */
+    public function unserialize(Canonicalizable $obj)
     {
         
     }

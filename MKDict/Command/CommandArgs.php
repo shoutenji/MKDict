@@ -4,11 +4,21 @@ namespace MKDict\Command;
 
 use MKDict\Command\Exception\OptionDoesNotExistException;
 
+/**
+ * Class for managing comman arguments passed to the PHP CLI
+ * 
+ * @author Taylor B <taylorbrontario@riseup.net>
+ */
 class CommandArgs extends \ArrayObject
 {
     protected $command_args;
     
-    public function __construct($argv)
+    /**
+     * Constructor
+     * 
+     * @param array $argv
+     */
+    public function __construct(array $argv)
     {
         $this->command_args = array();
         parent::__construct($this->command_args);
@@ -92,6 +102,12 @@ class CommandArgs extends \ArrayObject
         }
     }
     
+    /**
+     * Wrapper for ArrayObject::offsetGet()
+     * 
+     * @param string|int|bool $offset
+     * @return boolean
+     */
     public function offsetGet($offset)
     {
         if(!$this->offsetExists($offset))

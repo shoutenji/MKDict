@@ -5,6 +5,11 @@ namespace MKDict\DTD;
 use MKDict\FileResource\FileResource;
 use MKDict\DTD\Exception\DTDError;
 
+/**
+ * Class representing a DTD parser
+ * 
+ * @author Taylor B <taylorbrontario@riseup.net>
+ */
 class DTDParser
 {
     private $document_name;
@@ -15,37 +20,72 @@ class DTDParser
     
     protected $file;
     
+    /**
+     * Constructor
+     * 
+     * @param FileResource $file
+     */
     public function __construct(FileResource $file)
     {
         $this->file = $file;
     }
     
+    /**
+     * Get XML document name
+     * 
+     * @return string Document name
+     */
     public function get_document_name()
     {
         return $this->document_name;
     }
     
+    /**
+     * Get XML elements
+     * 
+     * @return array Elements
+     */
     public function get_elements()
     {
         return $this->elements;
     }
     
+    /**
+     * Get XML attributes
+     * 
+     * @return array attributes
+     */
     public function get_attributes()
     {
         return $this->attributes;
     }
     
+    /**
+     * Get declared XML attributes
+     * 
+     * @return array attributes
+     */
     public function get_entities()
     {
         return $this->entities;
     }
     
+    /**
+     * Get raw DTD as string
+     * 
+     * @return string Raw DTD
+     */
     public function get_raw()
     {
         return $this->raw;
     }
     
-   public function canonicalize()
+    /**
+     * Transform data into canonical form
+     * 
+     * @return string The canonical form
+     */
+    public function canonicalize()
     {
         global $config;
         
@@ -361,8 +401,16 @@ class DTDParser
         return  serialize(array('document_name' => $this->document_name, 'elements' => $this->elements, 'attributes' => $this->attributes, 'entities' => $this->entities));
     }
     
-    private function usort_by_column_name($array1, $array2)
+    /**
+     * A bespoke sort funcion for comparing nested array values
+     * 
+     * @param array $val1
+     * @param array $val2
+     * 
+     * @return bool True if the values are equal, false otherwise
+     */
+    private function usort_by_column_name(array $val1, array $val2)
     {
-        return strcmp(trim($array1['name']), trim($array2['name']));
+        return strcmp(trim($val1['name']), trim($val2['name']));
     }
 }

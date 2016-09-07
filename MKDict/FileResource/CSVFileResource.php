@@ -24,8 +24,7 @@ class CSVFileResource extends ByteStreamFileResource implements \IteratorAggrega
      */
     public function getIterator()
     {
-        $data = array();
-        
+        //todo file maybe too large for this operation
         $contents = @file($this->file_info->get_path_name());
         
         if(false === $contents)
@@ -44,14 +43,13 @@ class CSVFileResource extends ByteStreamFileResource implements \IteratorAggrega
                 {
                     unset($contents[$line_number]);
                 }
-                else if($skip_comment_line_char !== "" && substr($line_content, 0, 1) === $skip_comment_line_char)
+                else if($skip_comment_line_char !== "" && $line_content[0] === $skip_comment_line_char)
                 {
                     unset($contents[$line_number]);
                 }
             }
         }
         
-        $data = $contents;
-        return new CSVIterator($data);
+        return new CSVIterator($contents);
     }
 }

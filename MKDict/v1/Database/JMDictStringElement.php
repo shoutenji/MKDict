@@ -6,6 +6,11 @@ use MKDict\v1\Database\JMDictElement;
 use MKDict\v1\Database\JMDictElementList;
 use MKDict\v1\Database\Comparable;
 
+/**
+ * Class for representing a JMDict XML element which contains binary string data
+ * 
+ * @author Taylor B <taylorbrontario@riseup.net>
+ */
 class JMDictStringElement extends JMDictElement implements Comparable
 {
     public $binary_raw;
@@ -13,6 +18,11 @@ class JMDictStringElement extends JMDictElement implements Comparable
     public $infos;
     public $pris;
     
+    /**
+     * Constructor
+     * 
+     * @param string $binary
+     */
     public function __construct(string $binary = "")
     {
         $this->binary_raw = $binary;
@@ -21,11 +31,24 @@ class JMDictStringElement extends JMDictElement implements Comparable
         parent::__construct();
     }
     
+    /**
+     * Magin toString method
+     * 
+     * @return string
+     */
     public function __toString()
     {
         return $this->binary_raw;
     }
     
+    /**
+     * Test for equality
+     * 
+     * @param \MKDict\v1\Database\Comparable $instance1
+     * @param \MKDict\v1\Database\Comparable $instance2
+     * 
+     * @return bool True if equal, false otherwise
+     */
     public static function is_equal(Comparable $instance1, Comparable $instance2)
     {
         
@@ -54,6 +77,13 @@ class JMDictStringElement extends JMDictElement implements Comparable
         return true;
     }
     
+    /**
+     * Test for equality
+     * 
+     * @param \MKDict\v1\Database\Comparable $other
+     * 
+     * @return bool True if equal, false otherwise
+     */
     public function is_equal_to(Comparable $other)
     {
         return self::is_equal($this, $other);

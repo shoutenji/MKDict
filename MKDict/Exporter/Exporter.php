@@ -6,7 +6,12 @@ use MKDict\Database\DBConnection;
 use MKDict\Database\JMDictEntity;
 use MKDict\Security\Security;
 
-class Exporter
+/**
+ * FatalException
+ * 
+ * @author Taylor B <taylorbrontario@riseup.net>
+ */
+abstract class Exporter
 {
     protected $version_id;
     protected $db_conn;
@@ -14,17 +19,63 @@ class Exporter
     protected $file;
     protected $exporter;
     
-    public function output_header() {}
-    public function output_footer() {}
-    public function output_entry(JMDictEntity $entry) {}
-    public function get_entries() {}
+    /**
+     * Output header
+     */
+    public abstract function output_header();
     
-    //factory methods, since only the class that extends this class knows what classes to use for the JMDict element
-    public function new_reading() {}
-    public function new_sense() {}
-    public function new_kanji() {}
-    public function new_entry() {}
+    /**
+     * Output footer
+     */
+    public abstract function output_footer();
     
+    /**
+     * Output entry
+     * 
+     * @param JMDictEntity $entry
+     */
+    public abstract function output_entry(JMDictEntity $entry);
+    
+    /**
+     * Get entries
+     * 
+     * @return array
+     */
+    public abstract function get_entries();
+    
+    /**
+     * Factory method for creating a reading element.
+     * 
+     * @return JMDictEntity A new reading element
+     */
+    public abstract function new_reading();
+    
+    /**
+     * Factory method for creating a sense element.
+     * 
+     * @return JMDictEntity A new sense element
+     */
+    public abstract function new_sense();
+    
+    /**
+     * Factory method for creating a kanji element.
+     * 
+     * @return JMDictEntity A new kanji element
+     */
+    public abstract function new_kanji();
+    
+    /**
+     * Factory method for creating a entry element.
+     * 
+     * @return JMDictEntity A new entry element
+     */
+    public abstract function new_entry();
+    
+    /**
+     * Export db to file
+     * 
+     * @return void
+     */
     public function export()
     {
         $this->output_header();

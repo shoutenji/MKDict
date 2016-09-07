@@ -21,8 +21,8 @@ set_exception_handler("main_exception_handler");
 $config = array(
     'db_host' => 'localhost',
     'db_name' => 'manakyun',
-    'db_user' => "root",
-    'db_pass' => '159061br',
+    'db_user' => "",
+    'db_pass' => '',
     'db_table_prefix' => 'mk_',
 );
 

@@ -7,14 +7,30 @@ use MKDict\v1\Database\Comparable;
 use MKDict\v1\Database\JMDictElementList;
 use MKDict\Database\JMDictEntity;
 
+/**
+ * An JMDict XML entity
+ * 
+ * @author Taylor B <taylorbrontario@riseup.net>
+ */
 class JMDictElement implements JMDictEntity
 {
-    public $is_new = true; //helper var
+    /** @var bool simple helper var */
+    public $is_new = true;
     
+    /**
+     * Constructor
+     */
     public function __construct() {}
 
-    //Useful for getting null values returned when accessing nonexistant properties without triggering php errors
-    public function __get($name)
+    /**
+     * Magic __get() method. Useful for returning null when accessing nonexistant properties without triggering php errors
+     * 
+     * @param string $name
+     * @return null
+     * 
+     * @throws NonExistantPropertyException
+     */
+    public function __get(string $name)
     {
         global $options;
         
@@ -22,12 +38,20 @@ class JMDictElement implements JMDictEntity
         {
             throw new NonExistantPropertyException("object of class ".get_called_class()." does not have the property $name");
         }
-        else
-        {
-            return null;
-        }
+        
+        return null;
     }
     
+    /**
+     * Compare two JMDictElementList objects for equality. This function may call itself one or more times.
+     * 
+     * @param JMDictElementList $list1
+     * @param JMDictElementList $list2
+     * 
+     * @return bool True if element lists are equal, false otherwise
+     * 
+     * @todo this function should be moved to the JMDictElementList class
+     */
     public static function compare_element_lists(JMDictElementList $list1, JMDictElementList $list2, ...$keys)
     {
         global $options;
@@ -55,7 +79,7 @@ class JMDictElement implements JMDictEntity
             $keys = array_slice(func_get_args(), 2);
             foreach($keys as $key)
             {
-                $this_func = __CLASS__."::".__FUNCTION__;
+                $this_func = __CLASS__."::".__FUNCTION__; //can be replaced by __METHOD__
                 if(!$this_func(new JMDictElementList(array_column($ary1, $key)), new JMDictElementList(array_column($ary2, $key))))
                 {
                     return false;

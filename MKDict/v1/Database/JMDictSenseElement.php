@@ -5,6 +5,11 @@ namespace MKDict\v1\Database;
 use MKDict\v1\Database\JMDictElementList;
 use MKDict\v1\Database\Comparable;
 
+/**
+ * Class for representing a JMDict XML sense element
+ * 
+ * @author Taylor B <taylorbrontario@riseup.net>
+ */
 class JMDictSenseElement extends JMDictElement implements Comparable
 {
     public $glosses;
@@ -20,6 +25,9 @@ class JMDictSenseElement extends JMDictElement implements Comparable
     public $dials;
     public $sense_index;
     
+    /**
+     * Constructor
+     */
     public function __construct()
     {
         $this->restrs = new JMDictElementList();
@@ -38,6 +46,14 @@ class JMDictSenseElement extends JMDictElement implements Comparable
         parent::__construct();
     }
     
+    /**
+     * Test for equality
+     * 
+     * @param \MKDict\v1\Database\Comparable $sense1
+     * @param \MKDict\v1\Database\Comparable $sense2
+     * 
+     * @return bool True if equal, false otherwise
+     */
     public static function is_equal(Comparable $sense1, Comparable $sense2)
     {
         if(!JMDictElement::compare_element_lists($sense1->glosses, $sense2->glosses, "binary_raw", "lang", "gend"))
@@ -103,6 +119,13 @@ class JMDictSenseElement extends JMDictElement implements Comparable
         return true;
     }
     
+    /**
+     * Test for equality
+     * 
+     * @param \MKDict\v1\Database\Comparable $other
+     * 
+     * @return bool True if equal, false otherwise
+     */
     public function is_equal_to(Comparable $other)
     {
         return self::is_equal($this, $other);

@@ -7,6 +7,14 @@ use MKDict\Database\DBConnection;
 use MKDict\Database\DBError;
 use MKDict\Security\Security;
 
+/**
+ * A heavy-weight buffered DB layer for the JMDict version 1
+ * 
+ * @author Taylor B <taylorbrontario@riseup.net>
+ * 
+ * @todo flattened id arrays need to be typified
+ * @todo default args for functions are a little messy
+ */
 class JMDictDB implements JMDictDBInterface
 {
     protected $db_conn;
@@ -35,6 +43,12 @@ class JMDictDB implements JMDictDBInterface
     protected $stagrs_buffer;
     protected $stagks_buffer;
     
+    /**
+     * Constructor
+     * 
+     * @param DBConnection $db_conn
+     * @param int $version_id
+     */
     public function __construct(DBConnection $db_conn, int $version_id)
     {
         global $config;
@@ -69,7 +83,18 @@ class JMDictDB implements JMDictDBInterface
         );
     }
     
-    public function get_entries($sequence_ids_flat, $version_id = 0, $fetch_style = "", $order_by = "", $fields = array())
+    /**
+     * Get entries from database given a list of sequence ids
+     * 
+     * @param string $sequence_ids_flat
+     * @param int $version_id
+     * @param string $fetch_style
+     * @param string $order_by
+     * @param array $fields
+     * 
+     * @return array
+     */
+    public function get_entries(string $sequence_ids_flat, int $version_id = 0, string $fetch_style = "", string $order_by = "", array $fields = array())
     {
         global $config;
         
@@ -80,18 +105,25 @@ class JMDictDB implements JMDictDBInterface
         return $this->db_conn->fetchAll(\PDO::FETCH_ASSOC);
     }
     
-    public function get_diff_entry_uids(string $ids_values_flat)
+    /**
+     * Get entry ids
+     * 
+     * @param string $ids_values_flat
+     * 
+     * @return array
+     */
+    public function get_diff_entry_uids(string $sequence_ids_flat)
     {
         global $config;
         
-        $this->db_conn->prepare("SELECT sequence_id, entry_uid FROM ".$config['table_entries']." WHERE sequence_id NOT IN($ids_values_flat) AND ".$this->db_conn->version_check().";");
+        $this->db_conn->prepare("SELECT sequence_id, entry_uid FROM ".$config['table_entries']." WHERE sequence_id NOT IN($sequence_ids_flat) AND ".$this->db_conn->version_check().";");
         $this->db_conn->bindValue(":version_removed_id", $this->version_id, \PDO::PARAM_INT);
         $this->db_conn->bindValue(":version_added_id", $this->version_id, \PDO::PARAM_INT);
         $this->db_conn->execute();
         return $this->db_conn->fetchAll(\PDO::FETCH_ASSOC);
     }
     
-    public function get_uid($increment = true)
+    public function get_uid(bool $increment = true)
     {
          global $config;
          

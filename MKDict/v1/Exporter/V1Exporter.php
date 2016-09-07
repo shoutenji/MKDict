@@ -14,6 +14,11 @@ use MKDict\v1\Database\JMDictKanjiElement;
 use MKDict\v1\Database\JMDictReadingElement;
 use MKDict\v1\Database\JMDictSenseElement;
 
+/**
+ * Exporter for version 1
+ * 
+ * @author Taylor B <taylorbrontario@riseup.net>
+ */
 class V1Exporter extends Exporter
 {
     protected $version_id;
@@ -21,26 +26,51 @@ class V1Exporter extends Exporter
     protected $file;
     protected $paging_start;
     
+    /**
+     * Factory method for creating a reading element.
+     * 
+     * @return JMDictEntity A new reading element
+     */
     public function new_reading()
     {
         return new JMDictReadingElement();
     }
     
+    /**
+     * Factory method for creating a sense element.
+     * 
+     * @return JMDictEntity A new sense element
+     */
     public function new_sense()
     {
         return new JMDictSenseElement();
     }
     
+    /**
+     * Factory method for creating a kanji element.
+     * 
+     * @return JMDictEntity A new kanji element
+     */
     public function new_kanji()
     {
         return new JMDictKanjiElement();
     }
     
+    /**
+     * Factory method for creating a entry element.
+     * 
+     * @return JMDictEntity A new entry element
+     */
     public function new_entry()
     {
         return new JMDictEntry();
     }
     
+    /**
+     * Constructor
+     * 
+     * @param int $version_id
+     */
     public function __construct(int $version_id)
     {
         global $options, $config;
@@ -54,6 +84,11 @@ class V1Exporter extends Exporter
         $this->file->open();
     }
     
+    /**
+     * Get entries
+     * 
+     * @return array
+     */
     function get_entries()
     {
         global $config;
@@ -69,6 +104,11 @@ class V1Exporter extends Exporter
         return $this->db_conn->fetchAll(\PDO::FETCH_ASSOC);
     }
     
+    /**
+     * Output header
+     * 
+     * @return void
+     */
     function output_header()
     {
         $header = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n";
@@ -76,12 +116,24 @@ class V1Exporter extends Exporter
         $this->file->write($header);
     }
     
+    /**
+     * Output footer
+     * 
+     * @return void
+     */
     function output_footer()
     {
         $footer = "\n</jmdict>\n";
         $this->file->write($footer);
     }
     
+    /**
+     * Output entry
+     * 
+     * @param JMDictEntity $entry
+     * 
+     * @return void
+     */
     function output_entry(JMDictEntity $entry)
     {
         $entry_xsd_string = "\n";
