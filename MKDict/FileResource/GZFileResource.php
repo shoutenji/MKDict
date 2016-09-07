@@ -102,9 +102,9 @@ class GZFileResource implements FileResource, Downloadable
      * 
      * @return void
      */
-    public function seek($offset, $whence)
+    public function seek(int $offset, int $whence)
     {
-        if(0 > @gzseek($this->file_handle, $offset, $whence))
+        if(0 > gzseek($this->file_handle, $offset, $whence))
         {
             throw new FileIOFailureException($this->file_info);
         }
@@ -123,9 +123,9 @@ class GZFileResource implements FileResource, Downloadable
      * 
      * @return string The bytes read from this file
      */
-    public function read($num_bytes)
+    public function read(int $num_bytes)
     {
-        $result = @gzread($this->file_handle, $num_bytes);
+        $result = gzread($this->file_handle, $num_bytes);
         
         if(false === $result)
         {
@@ -148,9 +148,9 @@ class GZFileResource implements FileResource, Downloadable
      * 
      * @return void
      */
-    public function write($bytes)
+    public function write(string $bytes)
     {
-        $result = @gzwrite($this->file_handle, $bytes);
+        $result = gzwrite($this->file_handle, $bytes);
         
         if(false === $result)
         {
@@ -187,7 +187,7 @@ class GZFileResource implements FileResource, Downloadable
             return true;
         }
         
-        return @gzeof($this->file_handle);
+        return gzeof($this->file_handle);
     }
     
     /**
@@ -207,7 +207,7 @@ class GZFileResource implements FileResource, Downloadable
             return true;
         }
         
-        return @gzclose($this->file_handle);
+        return gzclose($this->file_handle);
     }
     
     /**
@@ -227,6 +227,6 @@ class GZFileResource implements FileResource, Downloadable
             return false;
         }
         
-        return @gzrewind($this->file_handle);
+        return gzrewind($this->file_handle);
     }
 }

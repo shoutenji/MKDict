@@ -2,3 +2,4 @@
 /var/logs/*
 /var/tmp/*
 /var/data/*
+config_dist.php

@@ -78,7 +78,7 @@ class JMDictParser extends DictionaryParser
      * 
      * @return void
      */
-    public function character_data_handler(resource $parser, string $data)
+    public function character_data_handler($parser, string $data)
     {
         $this->character_buffer .= strval($data);
     }
@@ -92,7 +92,7 @@ class JMDictParser extends DictionaryParser
      * 
      * @return void
      */
-    public function start_element_handler(resource $parser, string $name, array $attribs)
+    public function start_element_handler($parser, string $name, array $attribs)
     {
         global $options;
 
@@ -176,7 +176,7 @@ class JMDictParser extends DictionaryParser
      * 
      * @return void
      */
-    public function end_element_handler(resource $parser, string $name)
+    public function end_element_handler($parser, string $name)
     {
         global $config;
         
@@ -1105,19 +1105,19 @@ class JMDictParser extends DictionaryParser
             while(false !== $seq_ids_line = $this->tmp_file->fgets())
             {
                 $sequence_ids_ary = Security::explode_safe(",", trim($seq_ids_line));
-                $sequence_ids_flat = Security::flatten_array($sequence_ids_ary);
-                $expired_entries = $this->jmdb->get_diff_entry_uids($sequence_ids_flat);
-
-                foreach($expired_entries as $expired_entry_row)
-                {
-                    $this->jmdb->remove_entry($expired_entry_row['entry_uid'], $this->version_id);
-                    $expired_entry = new JMDictEntry();
-                    $expired_entry->entry_uid = $expired_entry_row['entry_uid'];
-                    $expired_entry->sequence_id = $expired_entry_row['sequence_id'];
-                    $this->logger->expired_entry($expired_entry);
-                }
-
                 $sequence_ids_full = array_merge($sequence_ids_full, $sequence_ids_ary);
+            }
+            
+            $sequence_ids_flat = Security::flatten_array($sequence_ids_full);
+            $expired_entries = $this->jmdb->get_absent_entry_uids($sequence_ids_flat);
+
+            foreach($expired_entries as $expired_entry_row)
+            {
+                $this->jmdb->remove_entry($expired_entry_row['entry_uid'], $this->version_id);
+                $expired_entry = new JMDictEntry();
+                $expired_entry->entry_uid = $expired_entry_row['entry_uid'];
+                $expired_entry->sequence_id = $expired_entry_row['sequence_id'];
+                $this->logger->expired_entry($expired_entry);
             }
 
             //check the full list of sequence_ids for duplicates and then logg the duplicate's presence

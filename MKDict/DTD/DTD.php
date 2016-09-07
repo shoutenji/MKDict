@@ -79,9 +79,9 @@ class DTD implements Canonicalizable
     /**
      * Unserialize
      * 
-     * @param type $obj
+     * @param type $canonicalizable
      */
-    public function unserialize(Canonicalizable $obj)
+    public function unserialize($canonicalizable)
     {
         
     }

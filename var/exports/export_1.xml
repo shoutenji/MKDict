@@ -10,7 +10,7 @@
           <binary form="raw" >くりかえし</binary>
       </reading>
       <sense sense_uid="4">
-          <pos>&n;</pos>
+          <pos>n</pos>
           <gloss>repetition mark in katakana</gloss>
       </sense>
   </entry>
@@ -23,7 +23,7 @@
           <binary form="raw" >くりかえし</binary>
       </reading>
       <sense sense_uid="8">
-          <pos>&n;</pos>
+          <pos>n</pos>
           <gloss>voiced repetition mark in katakana</gloss>
       </sense>
   </entry>
@@ -36,9 +36,9 @@
           <binary form="raw" >くりかえし</binary>
       </reading>
       <sense sense_uid="12">
-          <pos>&n;</pos>
+          <pos>n</pos>
           <gloss>repetition mark in hiragana</gloss>
-          <field>&food;</field>
+          <field>food</field>
       </sense>
   </entry>
 
@@ -50,7 +50,7 @@
           <binary form="raw" >かんすうじゼロ</binary>
       </reading>
       <sense sense_uid="16">
-          <pos>&n;</pos>
+          <pos>n</pos>
           <gloss>"kanji" zero</gloss>
           <xref>
               <binary form="raw">○・まる・1</binary>
@@ -77,11 +77,10 @@
           <binary form="raw" >まる</binary>
       </reading>
       <sense sense_uid="21">
-          <pos>&n;</pos>
+          <pos>n</pos>
           <gloss>circle (sometimes used for zero)</gloss>
       </sense>
       <sense sense_uid="22">
-          <pos>&n;</pos>
           <gloss>'correct' (when marking)</gloss>
           <ant>
               <binary form="raw">×・ばつ・1</binary>
@@ -100,7 +99,7 @@
           <binary form="raw" >かんすうじ</binary>
       </reading>
       <sense sense_uid="26">
-          <pos>&n;</pos>
+          <pos>n</pos>
           <gloss>Chinese characters which express numbers</gloss>
       </sense>
   </entry>
@@ -120,16 +119,15 @@
           <binary form="raw" >ペケ</binary>
       </reading>
       <sense sense_uid="32">
-          <pos>&n;</pos>
+          <pos>n</pos>
           <gloss>x-mark (used to indicate an incorrect answer in a test, etc.)</gloss>
       </sense>
       <sense sense_uid="33">
           <reading_ref reading_uid="31">ペケ</reading_ref>
-          <pos>&n;</pos>
           <gloss>impossibility</gloss>
           <gloss>futility</gloss>
           <gloss>uselessness</gloss>
-          <misc>&uk;</misc>
+          <misc>uk</misc>
       </sense>
   </entry>
 
@@ -149,13 +147,12 @@
           <kanji_ref kanji_uid="36">半平</kanji_ref>
       </reading>
       <sense sense_uid="39">
-          <pos>&n;</pos>
+          <pos>n</pos>
           <gloss>pounded fish cake</gloss>
-          <misc>&uk;</misc>
+          <misc>uk</misc>
       </sense>
       <sense sense_uid="40">
           <kanji_ref kanji_uid="35">半片</kanji_ref>
-          <pos>&n;</pos>
           <gloss>half a slice</gloss>
           <gloss>half a ticket</gloss>
           <gloss>ticket stub</gloss>
@@ -173,12 +170,12 @@
           <binary form="raw" >アカン</binary>
       </reading>
       <sense sense_uid="45">
-          <pos>&exp;</pos>
+          <pos>exp</pos>
           <gloss>useless</gloss>
           <gloss>no good</gloss>
           <gloss>hopeless</gloss>
-          <misc>&uk;</misc>
-          <dial>&ksb;</dial>
+          <misc>uk</misc>
+          <dial>ksb</dial>
       </sense>
   </entry>
 

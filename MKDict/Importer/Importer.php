@@ -11,6 +11,7 @@ use MKDict\FileResource\Exception\GZException\GZBadHeaderException;
 use MKDict\Unicode\Unicode;
 use MKDict\Unicode\Exception\InvalidUtf8Bytes;
 use MKDict\DTD\DTD;
+use MKDict\DTD\Exception\DTDError;
 use MKDict\Database\DBConnection;
 use MKDict\Database\DBTableCreator;
 use MKDict\Database\Exception\DBError;
@@ -57,12 +58,12 @@ class Importer
         
         if($options['validate_crc32'])
         {
-            //$this->validate_crc32();
+            $this->validate_crc32();
         }
         
         if($options['validate_utf8'])
         {
-            //$this->validate_utf8();
+            $this->validate_utf8();
         }
         
         $this->jmdict_file->rewind();
@@ -134,9 +135,20 @@ class Importer
     
     protected function get_versioned_dictionary_parser()
     {
+        if(empty($this->dtd))
+        {
+            throw new DTDError("No DTD available");
+        }
+        
+        if(!is_numeric($this->dtd->version))
+        {
+            throw new DTDError("Bad DTD version");
+        }
+        
         $parser_class_name = "MKDict\\v{$this->dtd->version}\\XML\\JMDictParser";
         $jmdb_clas_name = "MKDict\\v{$this->dtd->version}\\Database\\JMDictDB";
         $this->jmdict_file->rewind();
+        
         return new $parser_class_name($this->jmdict_file, $this->dtd, new $jmdb_clas_name($this->db_conn, $this->dtd->version_id, $this->logger), $this->logger);
     }
     
@@ -370,6 +382,7 @@ class Importer
         $jmdict_remote_finfo = new FileInfo();
         $jmdict_remote_finfo->set_url(new Url("$config[EDRDG_domain]/$config[EDRDG_path]/$config[JMDict_filename]"));
         $jmdict_remote_finfo->set_mode("rb");
+        /*
         $jmdict_remote_finfo->set_stream_context(array(
             'http' => array(
                     'method'    =>  'GET',
@@ -377,18 +390,23 @@ class Importer
                     'timeout'   =>  120,
             )
         ));
-        $jmdict_remote_file = new GZFileResource($jmdict_remote_finfo);
+        */
+        //$jmdict_remote_file = new GZFileResource($jmdict_remote_finfo);
+        $jmdict_remote_file = new ByteStreamFileResource($jmdict_remote_finfo);
         $jmdict_remote_file->open();
 
         //create the local binary file we're going to write the downloaded bytes into
         $jmdict_local_finfo = new FileInfo(Security::weak_random_string(10) . '_' . time() . '.gz', $config['data_dir']);
-        $jmdict_local_finfo->set_mode('w+b');
-        $jmdict_local_file = new GZFileResource($jmdict_local_finfo);
+        $jmdict_local_finfo->set_mode('wb');
+        $jmdict_local_file = new ByteStreamFileResource($jmdict_local_finfo);
         $jmdict_local_file->open();
         
         $jmdict_local_file->download_from($jmdict_remote_file);
-        
         $jmdict_local_file->rewind();
-        $this->jmdict_file = $jmdict_local_file;
+        
+        //todo create a write lock
+        $jmdict_local_finfo->set_mode("rb");
+        $this->jmdict_file = new GZFileResource($jmdict_local_finfo);
+        $this->jmdict_file->open();
     }
 }

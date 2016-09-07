@@ -28,24 +28,25 @@ class Installer
         $this->db_conn = new DBConnection($config['dsn'], $config['db_user'], $config['db_pass']);
     }
     
+    //todo create a blank config_dist.php file
     public function install()
     {
         global $options;
         
         if($options['generate_utf_data'])
         {
-            //$this->download_unicode_data_files();
-            //$this->generate_utf8_data_files();
+            $this->download_unicode_data_files();
+            $this->generate_utf8_data_files();
         }
         
         if($options['utf_tests'])
         {
-            //$this->test_utf8_data_files();
+            $this->test_utf8_data_files();
         }
         
         if($options['test_db'])
         {
-            //$this->test_db();
+            $this->test_db();
         }
         
         if($options['create_db'])

@@ -11,12 +11,14 @@ use MKDict\FileResource\Exception\FileTooLargeException;
 use MKDict\FileResource\Exception\FileIOFailureException;
 
 /**
- * A file IO class representing a standard file that is either local or remote where remote means one of PHP's built in stream contexts.
+ * A file IO class representing a standard file that is either local or remote where remote refers to one of PHP's built in stream contexts.
  * This class simply wraps PHP's various stream contexts and is underpinned by a FileInfo object. Notably, these read/write functions advance the underlying file pointer.
  *
  * @see http://php.net/manual/en/context.php This class supports all of PHP's various stream contexts
  * @see MKDict\FileResource\FileInfo
- * 
+ *
+ * @todo create a read and write lock
+ * @todo the open() function should be called in the constructor 
  * @todo this class should be divided into a LocalFileResource and a RemoteFileResource to make file management easier
  * @todo create a FileNotOpened exception
  * @todo the neccessity of the open() and rewind() functions make the use of this class prone to bugs. try returning a native file handle resource from the open function
@@ -132,7 +134,7 @@ class ByteStreamFileResource implements FileResource, Downloadable
      */
     public function read(int $num_bytes)
     {
-        $bytes = @fread($this->file_handle, $num_bytes);
+        $bytes = fread($this->file_handle, $num_bytes);
         
         if(false === $bytes)
         {
@@ -184,7 +186,7 @@ class ByteStreamFileResource implements FileResource, Downloadable
      * 
      * @see http://php.net/manual/en/function.fgets.php
      *
-     * @return mixed A line of the file as a string, or false upon failure or if the file has not yet been opened
+     * @return string|boolean A line of the file as a string, or false upon failure or if the file has not yet been opened
      * 
      * @todo a regular byte stream should not have this method. move this method to a CSVFile interface or something similar
      */

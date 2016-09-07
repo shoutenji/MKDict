@@ -268,7 +268,7 @@ class FileInfo
         if($this->is_local())
         {
             $file_path = $this->get_path_name();
-            $exists = @file_exists($file_path);
+            $exists = file_exists($file_path);
             
             switch($this->mode)
             {
@@ -279,11 +279,13 @@ class FileInfo
                     {
                         throw new FileDoesNotExistException($this);
                     }
-                    if(!@is_readable($file_path))
+                    
+                    if(!is_readable($file_path))
                     {
                         throw new FileNotReadableException($this);
                     }
-                    if(false === $size = @filesize($file_path))
+                    
+                    if(false === $size = filesize($file_path))
                     {
                         throw new FileIOFailureException($this);
                     }
@@ -308,7 +310,7 @@ class FileInfo
                 case 'c':
                 case 'ct':
                 case 'cb':
-                    if($exists && !@is_writeable($file_path))
+                    if($exists && !is_writeable($file_path))
                     {
                         throw new FileNotWriteableException($this);
                     }
@@ -331,7 +333,12 @@ class FileInfo
                 case 'c+':
                 case 'c+t':
                 case 'c+b':
-                    if($exists && !@is_readable($file_path))
+                    if($is_compressed)
+                    {
+                        throw new BadFileInfoException($this, "A gzip file cannot be opened for both reading and writting.");
+                    }
+                    
+                    if($exists && !is_readable($file_path))
                     {
                         throw new FileNotReadableException($this);
                     }
@@ -340,6 +347,7 @@ class FileInfo
                     {
                         throw new FileNotWriteableException($this);
                     }
+                    
                     if($exists)
                     {
                         if(false === $size = @filesize($file_path))
@@ -367,24 +375,17 @@ class FileInfo
         
         if($this->has_stream_context())
         {
-            if($is_compressed)
-            {
-                $handle = @\gzopen($file_path, $this->mode, $this->use_include, $this->get_stream_context());
-            }
-            else
-            {
-                $handle = @\fopen($file_path, $this->mode, $this->use_include, $this->get_stream_context());
-            }
+            $handle = \fopen($file_path, $this->mode, $this->use_include, $this->get_stream_context());
         }
         else
         {
             if($is_compressed)
             {
-                $handle = @\gzopen($file_path, $this->mode, $this->use_include);
+                $handle = \gzopen($file_path, $this->mode, $this->use_include);
             }
             else
             {
-                $handle = @\fopen($file_path, $this->mode, $this->use_include);
+                $handle = \fopen($file_path, $this->mode, $this->use_include);
             }
         }
         

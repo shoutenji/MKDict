@@ -62,7 +62,7 @@ $config = array_merge($config, array(
 ));
 
 $config = array_merge($config, array(
-    'EDRDG_domain' => 'http://ftp.monash.edu.au',
+    'EDRDG_domain' => 'ftp://ftp.monash.edu.au',
     'EDRDG_path' => 'pub/nihongo',
     'JMDict_filename' => 'JMdict_e.gz',
     'HTTP_stream_chunk_size' => 4096,

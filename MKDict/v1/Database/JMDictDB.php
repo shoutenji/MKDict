@@ -5,7 +5,15 @@ namespace MKDict\v1\Database;
 use MKDict\Database\JMDictDBInterface;
 use MKDict\Database\DBConnection;
 use MKDict\Database\DBError;
+use MKDict\Database\JMDictEntity;
 use MKDict\Security\Security;
+
+use MKDict\v1\Database\JMDictEntry;
+use MKDict\v1\Database\JMDictKanjiElement;
+use MKDict\v1\Database\JMDictReadingElement;
+use MKDict\v1\Database\JMDictSenseElement;
+use MKDict\v1\Database\JMDictStringElement;
+use MKDict\v1\Database\JMDictElementList;
 
 /**
  * A heavy-weight buffered DB layer for the JMDict version 1
@@ -42,6 +50,8 @@ class JMDictDB implements JMDictDBInterface
     protected $sense_xrefs_buffer;
     protected $stagrs_buffer;
     protected $stagks_buffer;
+    
+    const FETCH_BY_GROUP = \PDO::FETCH_ASSOC | \PDO::FETCH_GROUP;
     
     /**
      * Constructor
@@ -94,7 +104,7 @@ class JMDictDB implements JMDictDBInterface
      * 
      * @return array
      */
-    public function get_entries(string $sequence_ids_flat, int $version_id = 0, string $fetch_style = "", string $order_by = "", array $fields = array())
+    public function get_entries(string $sequence_ids_flat, int $version_id = 0, int $fetch_style = 0, string $order_by = "", array $fields = array())
     {
         global $config;
         
@@ -106,13 +116,13 @@ class JMDictDB implements JMDictDBInterface
     }
     
     /**
-     * Get entry ids
+     * Get sequence ids that are present in the DB but not in the passed argument list (these are called expired sequence ids)
      * 
      * @param string $ids_values_flat
      * 
      * @return array
      */
-    public function get_diff_entry_uids(string $sequence_ids_flat)
+    public function get_absent_entry_uids(string $sequence_ids_flat)
     {
         global $config;
         
@@ -123,6 +133,12 @@ class JMDictDB implements JMDictDBInterface
         return $this->db_conn->fetchAll(\PDO::FETCH_ASSOC);
     }
     
+    /**
+     * Get the global uid counter
+     * 
+     * @param bool $increment
+     * @return int The uid counter or false upon failure
+     */
     public function get_uid(bool $increment = true)
     {
          global $config;
@@ -148,6 +164,11 @@ class JMDictDB implements JMDictDBInterface
         return $this->uid_counter;
     }
 
+    /**
+     * Set the global uid counter
+     * 
+     * @return void
+     */
     public function update_uid_counter()
     {
         global $config;
@@ -158,7 +179,16 @@ class JMDictDB implements JMDictDBInterface
         $this->db_conn->execute();
     }
 
-    public function sequence_id_exists($sequence_id)
+    /**
+     * 
+     * @global type $config
+     * @param int $sequence_id
+     * @return boolean|boolCheck if sequence id exists
+     * 
+     * @param int $sequence_id
+     * @return bool
+     */
+    public function sequence_id_exists(int $sequence_id)
     {
         global $config;
 
@@ -171,13 +201,17 @@ class JMDictDB implements JMDictDBInterface
         {
             return false;
         }
-        else
-        {
-            return true;
-        }
+        
+        return true;
     }
 
-    public function remove_reading($reading_uid, $version_id)
+    /**
+     * Remove reading from specificed db version
+     * 
+     * @param int $reading_uid
+     * @param int $version_id
+     */
+    public function remove_reading(int $reading_uid, int $version_id)
     {
         global $config;
 
@@ -187,8 +221,13 @@ class JMDictDB implements JMDictDBInterface
         $this->db_conn->execute();
     }
 
-
-    public function remove_sense($sense_uid, $version_id)
+    /**
+     * Remove sense from specificed db version
+     * 
+     * @param int $sense_uid
+     * @param int $version_id
+     */
+    public function remove_sense(int $sense_uid, int $version_id)
     {
         global $config;
 
@@ -198,8 +237,13 @@ class JMDictDB implements JMDictDBInterface
         $this->db_conn->execute();
     }
 
-
-    public function remove_kanji($kanji_uid, $version_id)
+    /**
+     * Remove kanji from specificed db version
+     * 
+     * @param int $kanji_uid
+     * @param int $version_id
+     */
+    public function remove_kanji(int $kanji_uid, int $version_id)
     {
         global $config;
 
@@ -209,8 +253,13 @@ class JMDictDB implements JMDictDBInterface
         $this->db_conn->execute();
     }
 
-
-    public function remove_entry($entry_uid, $version_id)
+    /**
+     * Remove entry from specificed db version
+     * 
+     * @param int $entry_uid
+     * @param int $version_id
+     */
+    public function remove_entry(int $entry_uid, int $version_id)
     {
         global $config;
 
@@ -220,8 +269,14 @@ class JMDictDB implements JMDictDBInterface
         $this->db_conn->execute();
     }
 
-
-    public function write_all_buffers($reference_type_only = false)
+    /**
+     * Write all outstanding buffers to the db
+     * 
+     * @param bool $reference_type_only
+     * 
+     * @return void
+     */
+    public function write_all_buffers(bool $reference_type_only = false)
     {
         global $config;
 
@@ -363,6 +418,11 @@ class JMDictDB implements JMDictDBInterface
         }
     }
 
+    /**
+     * Write outstanding restrs to the db
+     * 
+     * @return void
+     */
     protected function write_restrs()
     {
         global $config;
@@ -379,6 +439,11 @@ class JMDictDB implements JMDictDBInterface
         $this->db_conn->execute();
     }
 
+    /**
+     * Write outstanding kanjis to the db
+     * 
+     * @return void
+     */
     protected function write_kanjis()
     {
         global $config;
@@ -405,6 +470,11 @@ class JMDictDB implements JMDictDBInterface
         $this->kanji_buffer = array();
     }
 
+    /**
+     * Write outstanding kanji infos to the db
+     * 
+     * @return void
+     */
     protected function write_kanji_infos()
     {
         global $config;
@@ -422,6 +492,11 @@ class JMDictDB implements JMDictDBInterface
         $this->kanji_info_buffer = array();
     }
 
+    /**
+     * Write outstanding kanji pis to the db
+     * 
+     * @return void
+     */
     protected function write_kanji_pris()
     {
         global $config;
@@ -439,8 +514,15 @@ class JMDictDB implements JMDictDBInterface
         $this->kanji_pri_buffer = array();
     }
 
-
-    public function new_kanji(JMDictKanjiElement $kanji, $version_id)
+    /**
+     * Create a new kanji
+     * 
+     * @param JMDictEntity $kanji
+     * @param int $version_id
+     * 
+     * @return int the newly issued kanji uid
+     */
+    public function new_kanji(JMDictEntity $kanji, int $version_id)
     {
         global $config;
 
@@ -495,9 +577,15 @@ class JMDictDB implements JMDictDBInterface
         {
             $this->write_kanjis();
         }
+        
         return $kanji_uid;
     }
 
+    /**
+     * Write outstanding readings to the db
+     * 
+     * @return void
+     */
     protected function write_readings()
     {
         global $config;
@@ -525,6 +613,11 @@ class JMDictDB implements JMDictDBInterface
         $this->reading_buffer = array();
     }
 
+    /**
+     * Write outstanding reading infos to the db
+     * 
+     * @return void
+     */
     protected function write_reading_infos()
     {
         global $config;
@@ -542,6 +635,11 @@ class JMDictDB implements JMDictDBInterface
         $this->reading_info_buffer = array();
     }
 
+    /**
+     * Write outstanding reading pis to the db
+     * 
+     * @return void
+     */
     protected function write_reading_pris()
     {
         global $config;
@@ -559,7 +657,15 @@ class JMDictDB implements JMDictDBInterface
         $this->reading_pri_buffer = array();
     }
 
-    public function new_reading(JMDictReadingElement $reading, $version_id)
+    /**
+     * Create a new reading
+     * 
+     * @param JMDictEntity $reading
+     * @param int $version_id
+     * 
+     * @return int the newly issued reading uid
+     */
+    public function new_reading(JMDictEntity $reading, int $version_id)
     {
         global $config;
 
@@ -618,7 +724,15 @@ class JMDictDB implements JMDictDBInterface
         return $reading_uid;
     }
 
-    public function new_sense(JMDictSenseElement $sense, $version_id)
+    /**
+     * Create a new sense
+     * 
+     * @param JMDictEntity $sense
+     * @param int $version_id
+     * 
+     * @return int the newly issued sense uid
+     */
+    public function new_sense(JMDictEntity $sense, int $version_id)
     {
         global $config;
 
@@ -778,6 +892,11 @@ class JMDictDB implements JMDictDBInterface
         return $sense_uid;
     }
 
+    /**
+     * Write outstanding sense xrefs
+     * 
+     * @return void
+     */
     protected function write_sense_xrefs()
     {
         global $config;
@@ -795,6 +914,11 @@ class JMDictDB implements JMDictDBInterface
         $this->sense_xrefs_buffer = array();
     }
 
+    /**
+     * Write outstanding sense ants
+     * 
+     * @return void
+     */
     protected function write_sense_ants()
     {
         global $config;
@@ -812,6 +936,11 @@ class JMDictDB implements JMDictDBInterface
         $this->sense_ants_buffer = array();
     }
 
+    /**
+     * Write outstanding sense lsources
+     * 
+     * @return void
+     */
     protected function write_sense_lsources()
     {
         global $config;
@@ -832,6 +961,11 @@ class JMDictDB implements JMDictDBInterface
         $this->sense_lsources_buffer = array();
     }
 
+    /**
+     * Write outstanding sense infos
+     * 
+     * @return void
+     */
     protected function write_sense_infos()
     {
         global $config;
@@ -849,6 +983,11 @@ class JMDictDB implements JMDictDBInterface
         $this->sense_info_buffer = array();
     }
 
+    /**
+     * Write outstanding sense miscs
+     * 
+     * @return void
+     */
     protected function write_miscs()
     {
         global $config;
@@ -866,6 +1005,11 @@ class JMDictDB implements JMDictDBInterface
         $this->misc_buffer = array();
     }
 
+    /**
+     * Write outstanding sense fields
+     * 
+     * @return void
+     */
     protected function write_fields()
     {
         global $config;
@@ -883,6 +1027,11 @@ class JMDictDB implements JMDictDBInterface
         $this->field_buffer = array();
     }
 
+    /**
+     * Write outstanding sense poses
+     * 
+     * @return void
+     */
     protected function write_poses()
     {
         global $config;
@@ -900,6 +1049,11 @@ class JMDictDB implements JMDictDBInterface
         $this->pos_buffer = array();
     }
 
+    /**
+     * Write outstanding sense dials
+     * 
+     * @return void
+     */
     protected function write_dials()
     {
         global $config;
@@ -917,6 +1071,11 @@ class JMDictDB implements JMDictDBInterface
         $this->dial_buffer = array();
     }
 
+    /**
+     * Write outstanding sense glosses
+     * 
+     * @return void
+     */
     protected function write_glosses()
     {
         global $config;
@@ -936,6 +1095,11 @@ class JMDictDB implements JMDictDBInterface
         $this->gloss_buffer = array();
     }
 
+    /**
+     * Write outstanding senses
+     * 
+     * @return void
+     */
     protected function write_senses()
     {
         global $config;
@@ -956,6 +1120,11 @@ class JMDictDB implements JMDictDBInterface
         $this->sense_buffer = array();
     }
 
+    /**
+     * Write outstanding entries
+     * 
+     * @return void
+     */
     protected function write_entries()
     {
         global $config;
@@ -975,7 +1144,15 @@ class JMDictDB implements JMDictDBInterface
         $this->entry_buffer = array();
     }
 
-    public function new_entry(JMDictEntry $entry, $version_id)
+    /**
+     * Create a new entry
+     * 
+     * @param JMDictEntity $entry
+     * @param type $version_id
+     * 
+     * @return int The newly issues entry id
+     */
+    public function new_entry(JMDictEntity $entry, int $version_id)
     {
         global $config;
 
@@ -994,8 +1171,14 @@ class JMDictDB implements JMDictDBInterface
     }
 
 
-    //this works for non-indexed columns and columns with duplicate values
-    private function get_column_vacancy($tablename, $columname)
+    /**
+     * Find a vacancy in the values of a column. Note, no assumptions are actually made about the column
+     * 
+     * @param string $tablename
+     * @param string $columname
+     * @return boolean|int
+     */
+    private function get_column_vacancy(string $tablename, string $columname)
     {
         if(false === $tablename = $this->clean_tablename($tablename))
         {
@@ -1028,8 +1211,15 @@ class JMDictDB implements JMDictDBInterface
         return $result['id'] === 0 ? false : $result['id'];
     }
 
-
-    private function clean_tablename($tablename)
+    /**
+     * Clean a tablename
+     * 
+     * @param string $tablename
+     * @return string|boolean
+     * 
+     * @throws DBError in debug mode if table name is invalid
+     */
+    private function clean_tablename(string $tablename)
     {
         global $config;
 
@@ -1070,8 +1260,17 @@ class JMDictDB implements JMDictDBInterface
         }
     }
 
-    //TODO this function serves no purpose anymore
-    private function clean_columnname($tablename, $columnname)
+    /**
+     * Clean a column name
+     * 
+     * @param string $tablename
+     * @param string $columnname
+     * 
+     * @return boolean
+     * 
+     * @throws DBError
+     */
+    private function clean_columnname(string $tablename, string $columnname)
     {
         $valid = true;
         if(false === $tablename = $this->clean_tablename($tablename))
@@ -1110,6 +1309,13 @@ class JMDictDB implements JMDictDBInterface
         }
     }
 
+    /**
+     * Write outstanding restrs
+     * 
+     * @param \MKDict\v1\Database\JMDictReadingElement $reading
+     * 
+     * @return void
+     */
     public function update_restrs(JMDictReadingElement $reading)
     {
         global $config;
@@ -1132,7 +1338,14 @@ class JMDictDB implements JMDictDBInterface
         }
     }
 
-    public function update_stagrs($stagrs)
+    /**
+     * Update stagr records
+     * 
+     * @param array $stagrs
+     * 
+     * @return void
+     */
+    public function update_stagrs(JMDictElementList $stagrs)
     {
         global $config;
 
@@ -1153,6 +1366,11 @@ class JMDictDB implements JMDictDBInterface
         }
     }
 
+    /**
+     * Write outstanding stagrs
+     * 
+     * @return void
+     */
     protected function write_stagrs()
     {
         global $config;
@@ -1170,7 +1388,14 @@ class JMDictDB implements JMDictDBInterface
         $this->stagrs_buffer = array();
     }
 
-    public function update_stagks($stagks)
+    /**
+     * Update stagk records
+     * 
+     * @param JMDictElementList $stagks
+     * 
+     * @return void
+     */
+    public function update_stagks(JMDictElementList $stagks)
     {
         global $config;
 
@@ -1191,6 +1416,11 @@ class JMDictDB implements JMDictDBInterface
         }
     }
 
+    /**
+     * Write outstanding stagks
+     * 
+     * @return void
+     */
     protected function write_stagks()
     {
         global $config;
@@ -1208,6 +1438,11 @@ class JMDictDB implements JMDictDBInterface
         $this->stagks_buffer = array();
     }
 
+    /**
+     * Flush xrefs from db
+     * 
+     * @return array
+     */
     public function flush_xrefs()
     {
         global $config;
@@ -1216,7 +1451,11 @@ class JMDictDB implements JMDictDBInterface
         return $this->db_conn->fetchAll(\PDO::FETCH_ASSOC);
     }
 
-
+    /**
+     * Flush ants from db
+     * 
+     * @return array
+     */
     public function flush_ants()
     {
         global $config;
@@ -1225,7 +1464,18 @@ class JMDictDB implements JMDictDBInterface
         return $this->db_conn->fetchAll(\PDO::FETCH_ASSOC);
     }
 
-    public function k_or_r_search($version_id, $stringv, $sense_index = 0)
+    /**
+     * Search the kanji list and the reading list for a match to the provided string.
+     * 
+     * Use this when searching for a binary string when it is not known if the string is a kanji or a reading
+     * 
+     * @param int $version_id
+     * @param string $stringv
+     * @param int $sense_index
+     * 
+     * @return array|boolean The results or false upon failure
+     */
+    public function k_or_r_search(int $version_id, string $stringv, int $sense_index = 0)
     {
         global $config;
 
@@ -1290,7 +1540,17 @@ class JMDictDB implements JMDictDBInterface
         return $results;
     }
 
-    public function k_and_r_search($version_id, $kanji_binary, $reading_binary, $sense_index = 0)
+    /**
+     * Search for a target reading given a kanji string and the reading string
+     * 
+     * @param int $version_id
+     * @param string $kanji_binary
+     * @param string $reading_binary
+     * @param int $sense_index
+     * 
+     * @return array|boolean The results or false upon failure
+     */
+    public function k_and_r_search(int $version_id, string $kanji_binary, string $reading_binary, int $sense_index = 0)
     {
         global $config;
 
@@ -1352,6 +1612,11 @@ class JMDictDB implements JMDictDBInterface
         return $results;
     }
 
+    /**
+     * Write outstanding xrefs to the db
+     * 
+     * @return void
+     */
     protected function write_xrefs()
     {
         global $config;
@@ -1372,6 +1637,11 @@ class JMDictDB implements JMDictDBInterface
         $this->reference_type_buffer[$config['table_xrefs']] = array();
     }
 
+    /**
+     * Write outstanding ants to the db
+     * 
+     * @return void
+     */
     protected function write_ants()
     {
         global $config;
@@ -1392,7 +1662,17 @@ class JMDictDB implements JMDictDBInterface
         $this->reference_type_buffer[$config['table_ants']] = array();
     }
 
-    public function new_reference_types($sense_uid, $results, $insertion_point, $binary_raw)
+    /**
+     * Create a new reference type
+     * 
+     * @param int $sense_uid
+     * @param array $results
+     * @param string $insertion_point
+     * @param string $binary_raw
+     * 
+     * @return boolean
+     */
+    public function new_reference_types(int $sense_uid, array $results, string $insertion_point, string $binary_raw)
     {
         global $config;
 
@@ -1422,11 +1702,22 @@ class JMDictDB implements JMDictDBInterface
         }
     }
 
-    public function get_kanjis($entry_uids_flat, $version_id, $fetch_style = \PDO::FETCH_ASSOC, $order_by = "kanji_uid", $fields = array("binary_raw"))
+    /**
+     * Get kanjis from database
+     * 
+     * @param string $entry_uids_flat
+     * @param int $version_id
+     * @param int $fetch_style
+     * @param string $order_by
+     * @param array $fields
+     * 
+     * @return array
+     */
+    public function get_kanjis(string $entry_uids_flat, int $version_id, int $fetch_style = \PDO::FETCH_ASSOC, string $order_by = "kanji_uid", array $fields = array("binary_raw"))
     {
         global $config;
 
-        //TODO SQL injection
+        //todo not safe against SQL injection
         $fields = implode(", ", $fields);
         $this->db_conn->prepare("SELECT entry_uid, kanji_uid, $fields FROM ".$config['table_kanjis']."  WHERE entry_uid IN($entry_uids_flat) AND ".$this->db_conn->version_check()." ORDER BY $order_by;");
         $this->db_conn->bindValue(":version_added_id", $version_id, \PDO::PARAM_INT);
@@ -1435,7 +1726,14 @@ class JMDictDB implements JMDictDBInterface
         return $this->db_conn->fetchAll($fetch_style);
     }
 
-    public function get_kanji_pris($kanji_uids_flat)
+    /**
+     * Get kanji pris
+     * 
+     * @param string $kanji_uids_flat
+     * 
+     * @return array
+     */
+    public function get_kanji_pris(string $kanji_uids_flat)
     {
         global $config;
 
@@ -1443,7 +1741,14 @@ class JMDictDB implements JMDictDBInterface
         return $this->db_conn->fetchAll(\PDO::FETCH_ASSOC | \PDO::FETCH_GROUP);
     }
 
-    public function get_kanji_infos($kanji_uids_flat)
+    /**
+     * Get kanji infos
+     * 
+     * @param string $kanji_uids_flat
+     * 
+     * @return array
+     */
+    public function get_kanji_infos(string $kanji_uids_flat)
     {
         global $config;
 
@@ -1451,7 +1756,18 @@ class JMDictDB implements JMDictDBInterface
         return $this->db_conn->fetchAll(\PDO::FETCH_ASSOC | \PDO::FETCH_GROUP);
     }
 
-    public function get_readings($entry_uids_flat, $version_id, $fetch_style = \PDO::FETCH_ASSOC, $order_by = "reading_uid", $fields = array("binary_raw"))
+    /**
+     * Get readings
+     * 
+     * @param string $entry_uids_flat
+     * @param int $version_id
+     * @param int $fetch_style
+     * @param string $order_by
+     * @param array $fields
+     * 
+     * @return array
+     */
+    public function get_readings(string $entry_uids_flat, int $version_id, int $fetch_style = \PDO::FETCH_ASSOC, string $order_by = "reading_uid", array $fields = array("binary_raw"))
     {
         global $config;
 
@@ -1464,7 +1780,14 @@ class JMDictDB implements JMDictDBInterface
         return $this->db_conn->fetchAll($fetch_style);
     }
 
-    public function get_reading_pris($reading_uids_flat)
+    /**
+     * Get reading pris
+     * 
+     * @param string $reading_uids_flat
+     * 
+     * @return array
+     */
+    public function get_reading_pris(string $reading_uids_flat)
     {
         global $config;
 
@@ -1472,7 +1795,14 @@ class JMDictDB implements JMDictDBInterface
         return $this->db_conn->fetchAll(\PDO::FETCH_ASSOC | \PDO::FETCH_GROUP);
     }
 
-    public function get_reading_infos($reading_uids_flat)
+    /**
+     * Get reading infos
+     * 
+     * @param string $reading_uids_flat
+     * 
+     * @return array
+     */
+    public function get_reading_infos(string $reading_uids_flat)
     {
         global $config;
 
@@ -1480,7 +1810,14 @@ class JMDictDB implements JMDictDBInterface
         return $this->db_conn->fetchAll(\PDO::FETCH_ASSOC | \PDO::FETCH_GROUP);
     }
 
-    public function get_reading_restrs($reading_uids_flat)
+    /**
+     * Get reading restrs
+     * 
+     * @param string $reading_uids_flat
+     * 
+     * @return array
+     */
+    public function get_reading_restrs(string $reading_uids_flat)
     {
         global $config;
 
@@ -1488,7 +1825,17 @@ class JMDictDB implements JMDictDBInterface
         return $this->db_conn->fetchAll(\PDO::FETCH_ASSOC | \PDO::FETCH_GROUP);
     }
 
-    public function get_senses($entry_uids_flat, $version_id, $fetch_style = \PDO::FETCH_ASSOC | \PDO::FETCH_GROUP, $order_by = "entry_uid", $fields)
+    /**
+     * Get senses
+     * 
+     * @param string $entry_uids_flat
+     * @param int $version_id
+     * @param int $fetch_style
+     * @param string $order_by
+     * @param array $fields
+     * @return type
+     */
+    public function get_senses(string $entry_uids_flat, int $version_id, int $fetch_style = self::FETCH_BY_GROUP, string $order_by = "entry_uid", array $fields = array())
     {
         global $config;
 
@@ -1499,7 +1846,14 @@ class JMDictDB implements JMDictDBInterface
         return $this->db_conn->fetchAll($fetch_style);
     }
 
-    public function get_sense_infos($sense_uids_flat)
+    /**
+     * Get sense infos
+     * 
+     * @param string $sense_uids_flat
+     * 
+     * @return array
+     */
+    public function get_sense_infos(string $sense_uids_flat)
     {
         global $config;
 
@@ -1507,8 +1861,14 @@ class JMDictDB implements JMDictDBInterface
         return $this->db_conn->fetchAll(\PDO::FETCH_ASSOC | \PDO::FETCH_GROUP);
     }
 
-
-    public function get_sense_poses($sense_uids_flat)
+    /**
+     * Get sense poses
+     * 
+     * @param string $sense_uids_flat
+     * 
+     * @return array
+     */
+    public function get_sense_poses(string $sense_uids_flat)
     {
         global $config;
 
@@ -1516,8 +1876,14 @@ class JMDictDB implements JMDictDBInterface
         return $this->db_conn->fetchAll(\PDO::FETCH_ASSOC | \PDO::FETCH_GROUP);
     }
 
-
-    public function get_sense_fields($sense_uids_flat)
+    /**
+     * Get sense fields
+     * 
+     * @param string $sense_uids_flat
+     * 
+     * @return array
+     */
+    public function get_sense_fields(string $sense_uids_flat)
     {
         global $config;
 
@@ -1525,7 +1891,14 @@ class JMDictDB implements JMDictDBInterface
         return $this->db_conn->fetchAll(\PDO::FETCH_ASSOC | \PDO::FETCH_GROUP);
     }
 
-    public function get_sense_miscs($sense_uids_flat)
+    /**
+     * Get sense miscs
+     * 
+     * @param string $sense_uids_flat
+     * 
+     * @return array
+     */
+    public function get_sense_miscs(string $sense_uids_flat)
     {
         global $config;
 
@@ -1533,7 +1906,14 @@ class JMDictDB implements JMDictDBInterface
         return $this->db_conn->fetchAll(\PDO::FETCH_ASSOC | \PDO::FETCH_GROUP);
     }
 
-    public function get_sense_dials($sense_uids_flat)
+    /**
+     * Get sense dials
+     * 
+     * @param string $sense_uids_flat
+     * 
+     * @return array
+     */
+    public function get_sense_dials(string $sense_uids_flat)
     {
         global $config;
 
@@ -1541,7 +1921,14 @@ class JMDictDB implements JMDictDBInterface
         return $this->db_conn->fetchAll(\PDO::FETCH_ASSOC | \PDO::FETCH_GROUP);
     }
 
-    public function get_sense_glosses($sense_uids_flat)
+    /**
+     * Get sense glosses
+     * 
+     * @param string $sense_uids_flat
+     * 
+     * @return array
+     */
+    public function get_sense_glosses(string $sense_uids_flat)
     {
         global $config;
 
@@ -1549,7 +1936,14 @@ class JMDictDB implements JMDictDBInterface
         return $this->db_conn->fetchAll(\PDO::FETCH_ASSOC | \PDO::FETCH_GROUP);
     }
 
-    public function get_sense_lsources($sense_uids_flat)
+    /**
+     * Get sense lsources
+     * 
+     * @param string $sense_uids_flat
+     * 
+     * @return array
+     */
+    public function get_sense_lsources(string $sense_uids_flat)
     {
         global $config;
 
@@ -1557,7 +1951,14 @@ class JMDictDB implements JMDictDBInterface
         return $this->db_conn->fetchAll(\PDO::FETCH_ASSOC | \PDO::FETCH_GROUP);
     }
 
-    public function get_sense_stagrs($sense_uids_flat)
+    /**
+     * Get sense stagrs
+     * 
+     * @param string $sense_uids_flat
+     * 
+     * @return array
+     */
+    public function get_sense_stagrs(string $sense_uids_flat)
     {
         global $config;
 
@@ -1565,7 +1966,14 @@ class JMDictDB implements JMDictDBInterface
         return $this->db_conn->fetchAll(\PDO::FETCH_ASSOC | \PDO::FETCH_GROUP);
     }
 
-    public function get_sense_stagks($sense_uids_flat)
+    /**
+     * Get sense stagks
+     * 
+     * @param string $sense_uids_flat
+     * 
+     * @return array
+     */
+    public function get_sense_stagks(string $sense_uids_flat)
     {
         global $config;
 
@@ -1573,7 +1981,14 @@ class JMDictDB implements JMDictDBInterface
         return $this->db_conn->fetchAll(\PDO::FETCH_ASSOC | \PDO::FETCH_GROUP);
     }
 
-    public function get_sense_raw_ants($sense_uids_flat)
+    /**
+     * Get sense ants
+     * 
+     * @param string $sense_uids_flat
+     * 
+     * @return array
+     */
+    public function get_sense_raw_ants(string $sense_uids_flat)
     {
         global $config;
 
@@ -1581,7 +1996,14 @@ class JMDictDB implements JMDictDBInterface
         return $this->db_conn->fetchAll(\PDO::FETCH_ASSOC | \PDO::FETCH_GROUP);
     }
 
-    public function get_sense_raw_xrefs($sense_uids_flat)
+    /**
+     * Get sense xrefs
+     * 
+     * @param string $sense_uids_flat
+     * 
+     * @return array
+     */
+    public function get_sense_raw_xrefs(string $sense_uids_flat)
     {
         global $config;
 
@@ -1589,8 +2011,14 @@ class JMDictDB implements JMDictDBInterface
         return $this->db_conn->fetchAll(\PDO::FETCH_ASSOC | \PDO::FETCH_GROUP);
     }
 
-    //todo this query needs to be sped up
-    public function get_sense_resolved_xrefs($sense_uids_flat)
+    /**
+     * Get sense xrefs fully resolved
+     * 
+     * @param string $sense_uids_flat
+     * 
+     * @return array
+     */
+    public function get_sense_resolved_xrefs(string $sense_uids_flat)
     {
         global $config;
 
@@ -1632,6 +2060,13 @@ class JMDictDB implements JMDictDBInterface
         return $xrefs_grouped;
     }
 
+    /**
+     * Get sense ants fully resolved
+     * 
+     * @param string $sense_uids_flat
+     * 
+     * @return array
+     */
     public function get_sense_resolved_ants($sense_uids_flat)
     {
         global $config;

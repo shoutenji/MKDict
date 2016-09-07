@@ -7,8 +7,7 @@ A stand alone PHP application that generates the database used in the Android ap
 ## Features
 * Requires PHP 7.0
 * A reg-exp based DTD parser
-* Custom Unicode 7.0 routines such as case folding, normalization, etc.
+* Custom Unicode 7.0 routines for case folding and normalization, etc. (the installation process will download the needed Unicode data files)
 * Exports the dictionary in an XML format that has several advantages over the JMDict format.
 * Low memory footprint (xml parsing, checksum verification, etc. do not require loading the entire xml document as a string)
-* The database layer is buffered which yields a net processing time of about 1 hour (previously without buffering the DB class processing time took about 72 hours)
-* Highly configurable
+* The database layer is buffered which yields a net processing time of about 1 hour (previously without buffering processing time took a whopping 72 hours)

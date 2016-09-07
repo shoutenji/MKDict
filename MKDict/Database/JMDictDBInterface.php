@@ -20,7 +20,7 @@ interface JMDictDBInterface
      * @param string $order_by The field to order by
      * @param array $fields An array of field names to retrieve from the respective table
      */
-    public function get_entries(string $sequence_ids_flat, int $version_id, string $fetch_style, string $order_by, array $fields);
+    public function get_entries(string $sequence_ids_flat, int $version_id, int $fetch_style, string $order_by, array $fields);
     
     /**
      * Get kanjis from database given a list of sequence ids
@@ -31,7 +31,7 @@ interface JMDictDBInterface
      * @param string $order_by The field to order by
      * @param array $fields An array of field names to retrieve from the respective table
      */
-    public function get_kanjis(string $entry_uids_flat, int $version_id, string $fetch_style, string $order_by, array $fields);
+    public function get_kanjis(string $entry_uids_flat, int $version_id, int $fetch_style, string $order_by, array $fields);
     
     /**
      * Get readings from database given a list of sequence ids
@@ -42,7 +42,7 @@ interface JMDictDBInterface
      * @param string $order_by The field to order by
      * @param array $fields An array of field names to retrieve from the respective table
      */
-    public function get_readings(string $entry_uids_flat, int $version_id, string $fetch_style, string $order_by, array $fields);
+    public function get_readings(string $entry_uids_flat, int $version_id, int $fetch_style, string $order_by, array $fields);
     
     /**
      * Get senses from database given a list of sequence ids
@@ -53,39 +53,39 @@ interface JMDictDBInterface
      * @param string $order_by The field to order by
      * @param array $fields An array of field names to retrieve from the respective table
      */
-    public function get_senses(string $entry_uids_flat, int $version_id, string $fetch_style, array $fields);
+    public function get_senses(string $entry_uids_flat, int $version_id, int $fetch_style, string $order_by, array $fields);
     
     /**
      * Create new entry
      * 
-     * @param \MKDict\Database\JMDictEntry $entry
+     * @param \MKDict\Database\JMDictEntity $entry
      * @param int $version_id The dictionary version
      */
-    public function new_entry(JMDictEntry $entry, int $version_id);
+    public function new_entry(JMDictEntity $entry, int $version_id);
     
     /**
      * Create new kanji
      * 
-     * @param \MKDict\Database\JMDictKanjiElement $kanji
+     * @param \MKDict\Database\JMDictEntity $kanji
      * @param int $version_id The dictionary version
      */
-    public function new_kanji(JMDictKanjiElement $kanji, int $version_id);
+    public function new_kanji(JMDictEntity $kanji, int $version_id);
     
     /**
      * Create new reading
      * 
-     * @param \MKDict\Database\JMDictReadingElement $reading
+     * @param \MKDict\Database\JMDictEntity $reading
      * @param int $version_id The dictionary version
      */
-    public function new_reading(JMDictReadingElement $reading, int $version_id);
+    public function new_reading(JMDictEntity $reading, int $version_id);
     
     /**
      * Create new sense
      * 
-     * @param \MKDict\Database\JMDictSenseElement $sense
+     * @param \MKDict\Database\JMDictEntity $sense
      * @param int $version_id The dictionary version
      */
-    public function new_sense(JMDictSenseElement $sense, int $version_id);
+    public function new_sense(JMDictEntity $sense, int $version_id);
     
     /**
      * Remove entry

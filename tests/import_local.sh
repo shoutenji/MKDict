@@ -5,7 +5,7 @@ source ./common.sh
 THIS_DIR=`dirname $0`
 JMDICT_DIR=`readlink -e "$THIS_DIR/.."`
 
-DATA_FILE_NAME="DD50996022F781D36_1472274168"
+DATA_FILE_NAME="1AB3E75782360C9D5C_1473277771"
 
 GZ_XML_FILE_NAME=`readlink -e "$JMDICT_DIR/var/data/$DATA_FILE_NAME.xml"`
 if [ -f "$GZ_XML_FILE_NAME" ]; then
@@ -26,10 +26,7 @@ IMPORT_OPTIONS=" --
                 $GZ_FILE
                 $PARSE_DICTIONARY
                 $VERSION_DICTIONARY
-                $DEBUG_VERSION
-                $WITH_ROLLBACK
-                $VALIDATE_CRC
-                $VALIDATE_UTF8"
+                $DEBUG_VERSION"
                 
 IMPORT_RESULT=`"$PHP" -f "$IMPORT_FILE" $IMPORT_OPTIONS`
 

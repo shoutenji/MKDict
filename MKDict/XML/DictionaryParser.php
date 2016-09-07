@@ -33,7 +33,7 @@ abstract class DictionaryParser
      * @param resource $name   The elements name
      * @param array $attribs   The elements attributes
      */
-    public abstract function start_element_handler(resource $parser, string $name, array $attribs);
+    public abstract function start_element_handler($parser, string $name, array $attribs);
     
     /**
      * end_element_handler() wrapper
@@ -41,7 +41,7 @@ abstract class DictionaryParser
      * @param resource $parser   The native parser resource
      * @param resource $name   The elements name
      */
-    public abstract function end_element_handler(resource $parser, string $name);
+    public abstract function end_element_handler($parser, string $name);
     
     /**
      * character_data_handler() wrapper
@@ -49,7 +49,7 @@ abstract class DictionaryParser
      * @param resource $parser   The native parser resource
      * @param resource $name   The character data
      */
-    public abstract function character_data_handler(resource $parser, string $data);
+    public abstract function character_data_handler($parser, string $data);
     
     /**
      * Return an array of the parser pass functions that need to be called as part of the parsing process

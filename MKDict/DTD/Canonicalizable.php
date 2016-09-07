@@ -35,5 +35,5 @@ interface Canonicalizable extends \Serializable
      * 
      * @param type $object
      */
-    public function unserialize(self $object);
+    public function unserialize($canonicalizable);
 }

@@ -65,7 +65,7 @@ interface FileResource
      * 
      * @return void
      */
-    public function seek($offset, $whence);
+    public function seek(int $offset, int $whence);
     
     /**
      * Sets the underlying FileInfo object
