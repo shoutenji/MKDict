@@ -17,7 +17,12 @@ use MKDict\Database\DBTableCreator;
 use MKDict\Database\Exception\DBError;
 use MKDict\Logger\ImportLogger;
 
-
+/**
+ * The main importer class.
+ * 
+ * @author Taylor B <taylorbrontario@riseup.net>
+ * 
+ */
 class Importer
 {
     public $db_conn;
@@ -25,6 +30,9 @@ class Importer
     
     protected $jmdict_file;
     
+    /**
+     * Constructor
+     */
     public function __construct()
     {
         global $config, $options;
@@ -33,16 +41,31 @@ class Importer
         $this->logger = new ImportLogger();
     }
     
+    /**
+     * Starts transation
+     * 
+     * @return void
+     */
     public function start_transation()
     {
         $this->db_conn->start_transaction();
     }
     
+    /**
+     * Ends transaction
+     * 
+     * @return void
+     */
     public function roll_back()
     {
         $this->db_conn->roll_back();
     }
     
+    /**
+     * The main import function
+     * 
+     * @return void
+     */
     public function import()
     {
         global $options, $config;
@@ -109,6 +132,11 @@ class Importer
         }
     }
     
+    /**
+     * Get the previous dictionary version
+     * 
+     * @return array
+     */
     protected function get_last_dictionary_version()
     {
         $this->db_conn->execute();
@@ -116,6 +144,11 @@ class Importer
         return $this->db_conn->fetch(\PDO::FETCH_ASSOC)['version_id'];
     }
     
+    /**
+     * Record this dictionary version in the db
+     * 
+     * @return void
+     */
     protected function version_dictionary()
     {
         global $config;
@@ -133,6 +166,13 @@ class Importer
         $this->dtd->version_id = $this->db_conn->fetch(\PDO::FETCH_ASSOC)['version_id'];
     }
     
+    /**
+     * Get the appropriate dictionary parser based off what the current DTD version is
+     * 
+     * @return \MKDict\XML\DictionaryParser
+     * 
+     * @throws DTDError if DTD is missing or invalid
+     */
     protected function get_versioned_dictionary_parser()
     {
         if(empty($this->dtd))
@@ -152,6 +192,11 @@ class Importer
         return new $parser_class_name($this->jmdict_file, $this->dtd, new $jmdb_clas_name($this->db_conn, $this->dtd->version_id, $this->logger), $this->logger);
     }
     
+    /**
+     * Parse the dictionary by calling in order the registered parser passes from the parser class
+     * 
+     * @return void
+     */
     protected function parse_dictionary()
     {
         $parser = $this->get_versioned_dictionary_parser();
@@ -167,7 +212,11 @@ class Importer
         $this->logger->flush();
     }
     
-    //todo can use pdo's db to object mapper
+    /**
+     * Get's the DTD of the last dictionary version from the db
+     * 
+     * @return boolean|DTD The DTD of the last dictionary version, or false if non available
+     */
     protected function get_previous_dtd()
     {
         global $config;
@@ -191,6 +240,15 @@ class Importer
         }
     }
     
+    /**
+     * Validates UTF8 files. Note, if even a single byte is incorrect, the import process aborts.
+     * 
+     * @throws InvalidUtf8Bytes
+     * 
+     * @return void
+     * 
+     * @todo there should be more recourse in the case of invalid UF8 bytes instead of just aborting
+     */
     protected function validate_utf8()
     {
         global $config;
@@ -202,8 +260,14 @@ class Importer
         }
     }
     
-    //validate the gzip file in accordance with http://www.ietf.org/rfc/rfc1952.txt
-    //the crc algorithm below is lifted verbatim from PHP's C source
+    /**
+     * Validate the CRC32 checksum of the dictionary file.
+     *  
+     * The Gzip file format can be found here http://www.ietf.org/rfc/rfc1952.txt. The CRC algorithm below is lifted
+     * verbatim from PHP's C source
+     * 
+     * @throws GZBadHeaderException
+     */
     protected function validate_crc32()
     {
         global $config;
@@ -356,6 +420,11 @@ class Importer
         unset($crc32tab);
     }
     
+    /**
+     * Set the dictionary file to a local file
+     * 
+     * @return void
+     */
     protected function set_local_jmdict()
     {
         global $options, $config;
@@ -375,6 +444,11 @@ class Importer
         $this->jmdict_file->open();
     }
     
+    /**
+     * Download dictionary file
+     * 
+     * @return void
+     */
     protected function download_jmdict()
     {
         global $options, $config;

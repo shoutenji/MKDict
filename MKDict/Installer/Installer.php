@@ -15,11 +15,22 @@ use MKDict\Database\DBConnection;
 use MKDict\Database\DBTableCreator;
 use MKDict\Database\Exception\DBError;
 
+/**
+ * The main installer class. The file format for the various unicode data files can be found here http://www.unicode.org/reports/tr44/#Format_Conventions
+ * 
+ * @author Taylor B <taylorbrontario@riseup.net>
+ * 
+ * @todo a blank config_dist.php file needs to be created
+ * @todo the Unicode file generation needs to be outsourced to a different class
+ */
 class Installer
 {
     protected $logger;
     protected $db_conn;
     
+    /**
+     * Constructor
+     */
     public function __construct()
     {
         global $config;
@@ -28,7 +39,11 @@ class Installer
         $this->db_conn = new DBConnection($config['dsn'], $config['db_user'], $config['db_pass']);
     }
     
-    //todo create a blank config_dist.php file
+    /**
+     * The main install function
+     * 
+     * @return void
+     */
     public function install()
     {
         global $options;
@@ -57,6 +72,11 @@ class Installer
         $this->logger->flush();
     }
     
+    /**
+     * Create all the needed db tables
+     * 
+     * @return void
+     */
     protected function create_db()
     {
         global $config;
@@ -225,6 +245,13 @@ class Installer
         $xref_virtual_table->create();
     }
     
+    /**
+     * Test database connection
+     * 
+     * @return void
+     * 
+     * @throws DBError if the db connection is not viable
+     */
     protected function test_db()
     {
         global $config;
@@ -246,13 +273,22 @@ class Installer
         }
     }
     
+    /**
+     * Test unicode classes
+     * 
+     * @return void
+     */
     protected function test_utf8_data_files()
     {
         $unicode_test = new UnicodeTest();
         $unicode_test->run_tests();
     }
     
-    //todo move these unicode related functions to another class
+    /**
+     * Download the needed Unicode data files
+     * 
+     * @return void
+     */
     protected function download_unicode_data_files()
     {
         global $config;
@@ -284,11 +320,15 @@ class Installer
         }
     }
     
-    //todo this is looking pretty ugly and repetitive here. the processing in this function needs be moved to the CSVIterator or CSVFileResource class
-    //and need to take better advantage of the file format
-    //the Install class should not be in charge of data process, but only the managment of (other classes that do) the processing
-    //todo truncate the text following the comment character
-    //FYI The file format for the various unicode data files can be found here http://www.unicode.org/reports/tr44/#Format_Conventions
+    /**
+     * Generate the needed Unicode data files
+     * 
+     * @return void
+     * 
+     * @todo this function is doing too much and there is also too much repetition
+     * @todo the processing in this function needs be moved to the CSVIterator or CSVFileResource class
+     * @todo the Install class should not be in charge of data processing, but only the managment of (other classes that do) the processing
+     */
     protected function generate_utf8_data_files()
     {
         global $config;
