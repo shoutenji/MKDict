@@ -5,7 +5,6 @@ source ./common.sh
 IMPORT_FILE="$JMDICT_DIR/import.php"
 
 IMPORT_OPTIONS=" --
-                $OUTPUT_FORMAT
                 $PARSE_DICTIONARY
                 $VERSION_DICTIONARY
                 $DEBUG_VERSION

@@ -20,3 +20,5 @@ if(!empty(ob_get_status()))
 
 $installer = new MKDict\Installer\Installer();
 $installer->install();
+ 
+echo "0";

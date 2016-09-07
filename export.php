@@ -25,3 +25,5 @@ $export_class_name = "MKDict\\v{$export_version}\\Exporter\\V{$export_version}Ex
 $exporter = new $export_class_name($export_version);
 
 $exporter->export();
+
+echo "0";

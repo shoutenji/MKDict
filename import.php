@@ -31,3 +31,5 @@ if($options['with_rollback'])
 {
     $importer->roll_back();
 }
+
+echo "0";
