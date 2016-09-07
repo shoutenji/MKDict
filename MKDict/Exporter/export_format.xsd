@@ -1,0 +1,184 @@
+<xsd:schema xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+    
+    <xsd:element name="pri" type="xsd:string"/>
+    <xsd:element name="info" type="xsd:string"/>
+    
+    <xsd:simpleType name="normal_form">
+        <xsd:restriction base="xsd:string">
+            <xsd:enumeration value="raw" />
+            <xsd:enumeration value="nfc" />
+            <xsd:enumeration value="nfd_cased" />
+        </xsd:restriction>
+    </xsd:simpleType>
+    
+    <xsd:attributeGroup name="attr_form">
+        <xsd:attribute name="form" type="normal_form"  use="optional"/>
+    </xsd:attributeGroup>
+    
+    <xsd:element name="binary">
+        <xsd:complexType>
+            <xsd:simpleContent>
+                <xsd:extension base="xsd:string">
+                    <xsd:attributeGroup ref="attr_form" />
+                </xsd:extension>
+            </xsd:simpleContent>
+        </xsd:complexType>
+    </xsd:element>
+    
+    <xsd:element name="re_binary">
+        <xsd:complexType>
+            <xsd:simpleContent>
+                <xsd:extension base="xsd:string">
+                    <xsd:attribute name="re_nokanji" type="xsd:boolean"  use="optional" default="false"/>
+                    <xsd:attributeGroup ref="attr_form" />
+                </xsd:extension>
+            </xsd:simpleContent>
+        </xsd:complexType>
+    </xsd:element>
+    
+    <xsd:element name="reading">
+        <xsd:complexType>
+            <xsd:sequence>
+                <xsd:element ref="binary" minOccurs="1" maxOccurs="unbounded"/>
+                <xsd:element ref="kanji_ref" minOccurs="0" maxOccurs="unbounded"/>
+                <xsd:element ref="pri" minOccurs="0" maxOccurs="unbounded"/>
+                <xsd:element ref="info" minOccurs="0" maxOccurs="unbounded"/>
+            </xsd:sequence>
+            <xsd:attribute name="reading_uid" type="xsd:positiveInteger"  use="required"/>
+            <xsd:attribute name="no_kanji" type="xsd:boolean"  use="optional"/>
+        </xsd:complexType>
+    </xsd:element>
+    
+    <xsd:element name="kanji">
+        <xsd:complexType>
+            <xsd:sequence>
+                <xsd:element ref="binary" minOccurs="1" maxOccurs="unbounded"/>
+                <xsd:element ref="pri" minOccurs="0" maxOccurs="unbounded"/>
+                <xsd:element ref="info" minOccurs="0" maxOccurs="unbounded"/>
+            </xsd:sequence>
+            <xsd:attribute name="kanji_uid" type="xsd:positiveInteger"  use="required"/>
+        </xsd:complexType>
+    </xsd:element>
+    
+    <xsd:element name="sense">
+        <xsd:complexType>
+            <xsd:sequence>
+                <xsd:element name="stagr" minOccurs="0" maxOccurs="unbounded">
+                    <xsd:complexType>
+                        <xsd:sequence>
+                            <xsd:element ref="reading_ref"  minOccurs="1" maxOccurs="1"/>
+                        </xsd:sequence>
+                    </xsd:complexType>
+                </xsd:element>
+                <xsd:element name="stagk" minOccurs="0" maxOccurs="unbounded">
+                    <xsd:complexType>
+                        <xsd:sequence>
+                            <xsd:element ref="kanji_ref"  minOccurs="1" maxOccurs="1"/>
+                        </xsd:sequence>
+                    </xsd:complexType>
+                </xsd:element>
+                <xsd:element name="pos" type="xsd:string" minOccurs="0" maxOccurs="unbounded"/>
+                <xsd:element name="gloss" minOccurs="0" maxOccurs="unbounded">
+                    <xsd:complexType>
+                        <xsd:simpleContent>
+                            <xsd:extension base="xsd:string">
+                                <xsd:attribute name="gend" type="xsd:string"  use="optional"/>
+                                <xsd:attribute name="lang" type="xsd:string"  use="optional" default="eng"/>
+                            </xsd:extension>
+                        </xsd:simpleContent>
+                    </xsd:complexType>
+                </xsd:element>
+                <xsd:element name="misc" type="xsd:string" minOccurs="0" maxOccurs="unbounded"/>
+                <xsd:element name="field" type="xsd:string" minOccurs="0" maxOccurs="unbounded"/>
+                <xsd:element name="dial" type="xsd:string" minOccurs="0" maxOccurs="unbounded"/>
+                <xsd:element ref="info" minOccurs="0" maxOccurs="unbounded"/>
+                <xsd:element name="lsource" minOccurs="0" maxOccurs="unbounded">
+                    <xsd:complexType>
+                        <xsd:simpleContent>
+                            <xsd:extension base="xsd:string">
+                                <xsd:attribute name="lang" type="xsd:string"  use="optional" default="eng"/>
+                                <xsd:attribute name="type" type="xsd:string"  use="optional"/>
+                                <xsd:attribute name="wasei" type="xsd:string"  use="optional"/>
+                            </xsd:extension>
+                        </xsd:simpleContent>
+                    </xsd:complexType>
+                </xsd:element>
+                <xsd:element name="xref" minOccurs="0" maxOccurs="unbounded">
+                    <xsd:complexType>
+                        <xsd:sequence>
+                            <xsd:element ref="binary" minOccurs="1" maxOccurs="unbounded"/>
+                            <xsd:element ref="kanji_ref"  minOccurs="1" maxOccurs="1"/>
+                            <xsd:element ref="reading_ref"  minOccurs="0" maxOccurs="1"/>
+                            <xsd:element ref="sense_ref"  minOccurs="0" maxOccurs="1"/>
+                        </xsd:sequence>
+                    </xsd:complexType>
+                </xsd:element>
+                <xsd:element name="ant" minOccurs="0" maxOccurs="unbounded">
+                    <xsd:complexType>
+                        <xsd:sequence>
+                            <xsd:element ref="binary" minOccurs="1" maxOccurs="unbounded"/>
+                            <xsd:element ref="kanji_ref"  minOccurs="1" maxOccurs="1"/>
+                            <xsd:element ref="reading_ref"  minOccurs="0" maxOccurs="1"/>
+                            <xsd:element ref="sense_ref"  minOccurs="0" maxOccurs="1"/>
+                        </xsd:sequence>
+                    </xsd:complexType>
+                </xsd:element>
+            </xsd:sequence>
+            <xsd:attribute name="sense_uid" type="xsd:positiveInteger"  use="required"/>
+        </xsd:complexType>
+    </xsd:element>
+    
+    <xsd:element name="kanji_ref">
+        <xsd:complexType>
+            <xsd:simpleContent>
+                <xsd:extension base="xsd:string">
+                    <xsd:attribute name="kanji_uid" type="xsd:positiveInteger"  use="required"/>
+                    <xsd:attributeGroup ref="attr_form" />
+                </xsd:extension>
+            </xsd:simpleContent>
+        </xsd:complexType>
+    </xsd:element>
+    
+    <xsd:element name="reading_ref">
+        <xsd:complexType>
+            <xsd:simpleContent>
+                <xsd:extension base="xsd:string">
+                    <xsd:attribute name="reading_uid" type="xsd:positiveInteger"  use="required"/>
+                    <xsd:attributeGroup ref="attr_form" />
+                </xsd:extension>
+            </xsd:simpleContent>
+        </xsd:complexType>
+    </xsd:element>
+    
+    <!-- the string content of this element is a selection of one of the glosses (usually the physically first one) if at least one gloss is present -->
+    <xsd:element name="sense_ref">
+        <xsd:complexType>
+            <xsd:simpleContent>
+                <xsd:extension base="xsd:string">
+                    <xsd:attribute name="reading_uid" type="xsd:positiveInteger"  use="required"/>
+                </xsd:extension>
+            </xsd:simpleContent>
+        </xsd:complexType>
+    </xsd:element>
+    
+    <xsd:element name="entry">
+        <xsd:complexType>
+            <xsd:sequence>
+                <xsd:element ref="kanji" minOccurs="0" maxOccurs="unbounded"/>
+                <xsd:element ref="reading" minOccurs="1" maxOccurs="unbounded"/>
+                <xsd:element ref="sense" minOccurs="0" maxOccurs="unbounded"/>
+            </xsd:sequence>
+            <xsd:attribute name="entry_uid" type="xsd:positiveInteger"  use="required"/>
+            <xsd:attribute name="sequence_id" type="xsd:positiveInteger"  use="required"/>
+        </xsd:complexType>
+    </xsd:element>
+    
+    <xsd:element name="jmdict">
+        <xsd:complexType>
+            <xsd:sequence>
+                <xsd:element ref="entry" minOccurs="0" maxOccurs="unbounded"/>
+            </xsd:sequence>
+        </xsd:complexType>
+    </xsd:element>
+    
+</xsd:schema>
