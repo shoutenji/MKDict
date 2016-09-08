@@ -29,6 +29,7 @@ this app does a lot to filter and sanitize the original JMDict file. Namely, wit
 * No invalid UTF8
 * Numbers are numbers, and strings are strings (types are as they should be, and both always contain reasonable values)
 * The problematic "・" character to separate reading and kanji entries no longer denotes such a delimitation
+
 I hope to add config options related to how MKDict will react to invalid data from the JMDict file (ie do you want to truncate an excessively long string or safely ignore the element
 containing that long string)
 
