@@ -5,3 +5,4 @@
 11)should add extra types to the JMDictDocument family ie JMDictRestr, JMDictStagk, JMDictIDList, JMDictXref, JMDictAntonym etc.
 12)clear out temp dir after program finishes running
 13)importing should always be running in transaction mode. then if php fails, the db can be safely restored
+14)integrate PHPUnit
