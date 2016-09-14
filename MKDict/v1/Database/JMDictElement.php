@@ -15,6 +15,7 @@ use MKDict\Database\JMDictEntity;
 class JMDictElement implements JMDictEntity
 {
     /** @var bool simple helper var */
+    /** @todo bad design. promote this flag to actual function */
     public $is_new = true;
     
     /**
