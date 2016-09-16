@@ -1341,11 +1341,12 @@ class JMDictDB implements JMDictDBInterface
     /**
      * Update stagr records
      * 
-     * @param array $stagrs
+     * @param JMDictElementList $stagrs
+     * @param int $sense_uid
      * 
      * @return void
      */
-    public function update_stagrs(JMDictElementList $stagrs)
+    public function update_stagrs(JMDictElementList $stagrs, int $sense_uid)
     {
         global $config;
 
@@ -1354,7 +1355,7 @@ class JMDictDB implements JMDictDBInterface
             if(isset($stagr['reading_uid']))
             {
                 $this->stagrs_buffer[] = array(
-                    'sense_uid' => $stagr['sense_uid'],
+                    'sense_uid' => $sense_uid,
                     'reading_uid' => $stagr['reading_uid']
                 );
             }
@@ -1392,10 +1393,11 @@ class JMDictDB implements JMDictDBInterface
      * Update stagk records
      * 
      * @param JMDictElementList $stagks
+     * @param int $sense_uid
      * 
      * @return void
      */
-    public function update_stagks(JMDictElementList $stagks)
+    public function update_stagks(JMDictElementList $stagks, int $sense_uid)
     {
         global $config;
 
@@ -1404,7 +1406,7 @@ class JMDictDB implements JMDictDBInterface
             if(isset($stagk['kanji_uid']))
             {
                 $this->stagks_buffer[] = array(
-                    'sense_uid' => $stagk['sense_uid'],
+                    'sense_uid' => $sense_uid,
                     'kanji_uid' => $stagk['kanji_uid']
                 );
             }

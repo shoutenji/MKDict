@@ -1,9 +1,9 @@
 <?php
 
-namespace MKDict\v1\Exporter;
+namespace MKDict\v1\Exporter\XML;
 
 use MKDict\Database\DBConnection;
-use MKDict\Exporter\Exporter;
+use MKDict\Exporter\XML\XMLExporter;
 use MKDict\Database\JMDictEntity;
 use MKDict\FileResource\FileInfo;
 use MKDict\FileResource\ByteStreamFileResource;
@@ -15,11 +15,11 @@ use MKDict\v1\Database\JMDictReadingElement;
 use MKDict\v1\Database\JMDictSenseElement;
 
 /**
- * Exporter for version 1
+ * XML Exporter for version 1
  * 
  * @author Taylor B <taylorbrontario@riseup.net>
  */
-class V1Exporter extends Exporter
+class V1XMLExporter extends XMLExporter
 {
     protected $version_id;
     protected $db_conn;

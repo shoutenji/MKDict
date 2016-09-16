@@ -58,7 +58,6 @@ THIS_DIR=`dirname $0`
 JMDICT_DIR=`readlink -e $THIS_DIR`
 
 #possible options for scripts
-OUTPUT_FORMAT="--bash-output"
 CREATE_DB="--create-db"
 TEST_DB="--test-db"
 UTF_TESTS="--utf-tests"

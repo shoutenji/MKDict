@@ -21,7 +21,6 @@ SAMPLE_GZ_FILE="--sample-gz-file=$DATA_FILE_NAME.gz"
 IMPORT_FILE="$JMDICT_DIR/import.php"
 
 IMPORT_OPTIONS=" --
-                $OUTPUT_FORMAT
                 $LOCAL_COPY
                 $SAMPLE_GZ_FILE
                 $PARSE_DICTIONARY

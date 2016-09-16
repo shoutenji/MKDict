@@ -15,9 +15,7 @@ INIT_FILE="$JMDICT_DIR/install.php"
 INIT_OPTIONS=" --
                 $CREATE_DB
                 $TEST_DB
-                $DEBUG_VERSION
-                $GENERATE_UTF_DATA
-                $UTF_TESTS"
+                $DEBUG_VERSION"
 
 INIT_RESULT=`"$PHP" -f "$INIT_FILE" $INIT_OPTIONS`
 

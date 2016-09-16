@@ -824,7 +824,7 @@ class JMDictParser extends DictionaryParser
                         $this->processing_errors_collection->stagr_target_not_found($this_entry, $this_sense);
                     }
                     unset($stagr);
-                    $this->jmdb->update_stagrs($this_sense);
+                    $this->jmdb->update_stagrs($this_sense->stagrs, $this->sense_uid);
                 }
 
                 if(!empty($this_sense->stagks))
@@ -842,7 +842,7 @@ class JMDictParser extends DictionaryParser
                         $this->processing_errors_collection->stagk_target_not_found($this_entry, $this_sense);
                     }
                     unset($stagk);
-                    $this->jmdb->update_stagks($this_sense);
+                    $this->jmdb->update_stagks($this_sense->stagks, $this->sense_uid);
                 }
             }
         }
@@ -952,7 +952,7 @@ class JMDictParser extends DictionaryParser
                     $this->processing_errors_collection->stagr_target_not_found($entry, $sense);
                 }
                 unset($stagr);
-                $this->jmdb->update_stagrs($sense->stagrs);
+                $this->jmdb->update_stagrs($sense->stagrs, $sense->sense_uid);
             }
 
             if(!empty($sense->stagks))
@@ -971,7 +971,7 @@ class JMDictParser extends DictionaryParser
                     $this->processing_errors_collection->stagk_target_not_found($entry, $sense);
                 }
                 unset($stagk);
-                $this->jmdb->update_stagks($sense->stagks);
+                $this->jmdb->update_stagks($sense->stagks, $sense->sense_uid);
             }
         }
 

@@ -5,10 +5,12 @@ source ./common.sh
 EXPORT_FILE="$JMDICT_DIR/export.php"
 
 EXPORT_VERSION="--export-version=1"
+EXPORT_TYPE="--export-type=XML"
+#EXPORT_TYPE="--export-type=SQL"
 
 EXPORT_OPTIONS=" --
-                $OUTPUT_FORMAT
-                $EXPORT_VERSION"
+                $EXPORT_VERSION
+                $EXPORT_TYPE"
                 
 EXPORT_RESULT=`"$PHP" -f "$EXPORT_FILE" $EXPORT_OPTIONS`
 

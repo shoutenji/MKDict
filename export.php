@@ -20,7 +20,7 @@ if(!empty(ob_get_status()))
 
 $export_version = $options['export_version'];
 
-$export_class_name = "MKDict\\v{$export_version}\\Exporter\\V{$export_version}Exporter";
+$export_class_name = "MKDict\\v{$export_version}\\Exporter\\XML\\V{$export_version}XMLExporter";
 
 $exporter = new $export_class_name($export_version);
 
