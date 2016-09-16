@@ -14,6 +14,10 @@ JMDict file, parse it, and insert any changes relative to the previous version i
 * The database layer is buffered which yields a net processing time of about 1 hour (previously without buffering processing time took a whopping 72 hours)
 * log file detailing any errors or elements which failed to import due to invalid data (which is a good way to catch errors in the original JMDict file)
 
+## Upcoming Features
+* Sentence examples (from tatoeba.org and the JEITA corpus)
+* Collocations (done with NLTK in Python)
+
 ## The XML export format
 See the XSD document in the Exporter folder. One of the main advantages of this format is that every element is given a unique id and cross references reference this id.
 Another advantage is that in addition to the raw string being reproduced, Unicode normal forms are also given. Hence each element has a proper canonical form which can be
