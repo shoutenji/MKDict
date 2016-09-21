@@ -40,6 +40,11 @@ class CommandArgs extends \ArrayObject
                 $arg_tokens = explode("=", $arg);
                 $this["export_version"] = intval(trim($arg_tokens[1]));
             }
+            else if(preg_match("/--export-type=(.*)/ixsm", $arg))
+            {
+                $arg_tokens = explode("=", $arg);
+                $this["export_type"] = trim($arg_tokens[1]);
+            }
             else
             {
                 switch($arg)

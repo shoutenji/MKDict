@@ -13,63 +13,68 @@ use MKDict\Security\Security;
  */
 abstract class XMLExporter
 {
-    protected $version_id;
-    protected $db_conn;
-    protected $jmdb;
-    protected $file;
-    protected $exporter;
+    /**
+     * Constructor
+     * 
+     * @param int $version_id
+     * @param string $type
+     */
+    public function __construct(int $version_id)
+    {
+        parent::__construct($version_id, "XML");
+    }
     
     /**
      * Output header
      */
-    public abstract function output_header();
+    protected abstract function output_header();
     
     /**
      * Output footer
      */
-    public abstract function output_footer();
+    protected abstract function output_footer();
     
     /**
      * Output entry
      * 
      * @param JMDictEntity $entry
      */
-    public abstract function output_entry(JMDictEntity $entry);
+    protected abstract function output_entry(JMDictEntity $entry);
     
     /**
      * Get entries
      * 
      * @return array
      */
-    public abstract function get_entries();
+    protected abstract function get_entries();
     
     /**
      * Factory method for creating a reading element.
      * 
      * @return JMDictEntity A new reading element
      */
-    public abstract function new_reading();
+    protected abstract function new_reading();
     
     /**
      * Factory method for creating a sense element.
      * 
      * @return JMDictEntity A new sense element
      */
-    public abstract function new_sense();
+    protected abstract function new_sense();
     
     /**
      * Factory method for creating a kanji element.
      * 
      * @return JMDictEntity A new kanji element
      */
-    public abstract function new_kanji();
+    protected abstract function new_kanji();
     
     /**
      * Factory method for creating a entry element.
      * 
      * @return JMDictEntity A new entry element
      */
-    public abstract function new_entry();
+    protected abstract function new_entry();
     
     /**
      * Export db to file

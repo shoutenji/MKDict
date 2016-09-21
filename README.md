@@ -1,3 +1,5 @@
+[![Minimum PHP Version](https://img.shields.io/badge/php-%3E%3D%207.0-8892BF.svg?style=flat-square)](https://php.net/)
+
 # MKDict
 A Japanese-English dictionary based off Jim Breen's JMDict http://www.edrdg.org/jmdict/j_jmdict.html
 

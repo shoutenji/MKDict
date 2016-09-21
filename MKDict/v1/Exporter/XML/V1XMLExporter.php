@@ -21,17 +21,22 @@ use MKDict\v1\Database\JMDictSenseElement;
  */
 class V1XMLExporter extends XMLExporter
 {
-    protected $version_id;
-    protected $db_conn;
-    protected $file;
-    protected $paging_start;
+    /**
+     * Get the DB that matches export version
+     * 
+     * @return JMDictDBInterface
+     */
+    protected function get_versioned_db()
+    {
+        return new JMDictDB($this->db_conn, $this->version_id);
+    }
     
     /**
      * Factory method for creating a reading element.
      * 
      * @return JMDictEntity A new reading element
      */
-    public function new_reading()
+    protected function new_reading()
     {
         return new JMDictReadingElement();
     }
@@ -41,7 +46,7 @@ class V1XMLExporter extends XMLExporter
      * 
      * @return JMDictEntity A new sense element
      */
-    public function new_sense()
+    protected function new_sense()
     {
         return new JMDictSenseElement();
     }
@@ -51,7 +56,7 @@ class V1XMLExporter extends XMLExporter
      * 
      * @return JMDictEntity A new kanji element
      */
-    public function new_kanji()
+    protected function new_kanji()
     {
         return new JMDictKanjiElement();
     }
@@ -61,47 +66,9 @@ class V1XMLExporter extends XMLExporter
      * 
      * @return JMDictEntity A new entry element
      */
-    public function new_entry()
+    protected function new_entry()
     {
         return new JMDictEntry();
-    }
-    
-    /**
-     * Constructor
-     * 
-     * @param int $version_id
-     */
-    public function __construct(int $version_id)
-    {
-        global $options, $config;
-        
-        $this->version_id = $version_id;
-        $this->paging_start = 0;
-                
-        $this->db_conn = new DBConnection($config['dsn'], $config['db_user'], $config['db_pass']);
-        $this->jmdb = new JMDictDB($this->db_conn, $this->version_id);
-        $this->file = new ByteStreamFileResource(new FileInfo("export_$this->version_id.xml", $config['export_dir'], null, array(), "w"));
-        $this->file->open();
-    }
-    
-    /**
-     * Get entries
-     * 
-     * @return array
-     */
-    function get_entries()
-    {
-        global $config;
-        
-        $this->db_conn->prepare("SELECT sequence_id, entry_uid FROM ".$config['table_entries']." WHERE ".$this->db_conn->version_check()." ORDER BY entry_uid LIMIT :paging_start, $config[export_block_size];");
-        $this->db_conn->bindValue(":paging_start", $this->paging_start, \PDO::PARAM_INT);
-        $this->db_conn->bindValue(":version_removed_id", $this->version_id , \PDO::PARAM_INT);
-        $this->db_conn->bindValue(":version_added_id", $this->version_id , \PDO::PARAM_INT);
-        $this->db_conn->execute();
-        
-        $this->paging_start += $config['export_block_size'];
-        
-        return $this->db_conn->fetchAll(\PDO::FETCH_ASSOC);
     }
     
     /**
@@ -109,7 +76,7 @@ class V1XMLExporter extends XMLExporter
      * 
      * @return void
      */
-    function output_header()
+    protected function output_header()
     {
         $header = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n";
         $header .= "<jmdict>\n";
@@ -121,7 +88,7 @@ class V1XMLExporter extends XMLExporter
      * 
      * @return void
      */
-    function output_footer()
+    protected function output_footer()
     {
         $footer = "\n</jmdict>\n";
         $this->file->write($footer);
@@ -134,7 +101,7 @@ class V1XMLExporter extends XMLExporter
      * 
      * @return void
      */
-    function output_entry(JMDictEntity $entry)
+    protected function output_entry(JMDictEntity $entry)
     {
         $entry_xsd_string = "\n";
         $entry_xsd_string .= "  <entry entry_uid=\"$entry->entry_uid\" sequence_id=\"$entry->sequence_id\">\n";

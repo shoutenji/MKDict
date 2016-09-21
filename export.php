@@ -20,7 +20,21 @@ if(!empty(ob_get_status()))
 
 $export_version = $options['export_version'];
 
-$export_class_name = "MKDict\\v{$export_version}\\Exporter\\XML\\V{$export_version}XMLExporter";
+switch(strtoupper($options['export_type']))
+{
+    case 'XML':
+        $export_class_name = "MKDict\\v{$export_version}\\Exporter\\XML\\V{$export_version}XMLExporter";
+        break;
+    
+    case 'SQL':
+        $export_class_name = "MKDict\\v{$export_version}\\Exporter\\SQL\\V{$export_version}SQLExporter";
+        break;
+    
+    default:
+        die("invalid export type specified");
+        break;
+}
+
 
 $exporter = new $export_class_name($export_version);
 
