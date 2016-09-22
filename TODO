@@ -1,3 +1,4 @@
+1)the testing needs to be more transparent (PHPUnit)
 3)the file classes need some redesign work
 7)reading and writing to the tmp directory is not secure
 9)need a printable function for printing objects to the log file or stdout

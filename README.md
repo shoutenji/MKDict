@@ -5,12 +5,13 @@ A Japanese-English dictionary based off Jim Breen's JMDict http://www.edrdg.org/
 
 ## Overview
 A stand alone PHP application that generates the database used in the Android app Manakyun. This app will download the latest
-JMDict file, parse it, and insert any changes relative to the previous version into the database.
+JMDict file, parse it, and insert any changes relative to the previous version into the database. This app aims to be a complete,
+self-contained, and open wrapper for the JMDict file that aids the development of apps based off Breen's dictionary (like Manakyun).
 
 ## Features
 * Requires PHP 7.0
-* A reg-exp based DTD parser
-* Unicode based normalization for string data, etc. (the installation process will download the needed Unicode data files)
+* A reg-exp based DTD parser (if the DTD changes on JMDict, MKDict will notice)
+* Pollyfill Unicode based normalization for string data, etc. (the installation process will download the needed Unicode data files)
 * Export the dictionary in an XML format that has several advantages over the JMDict format.
 * Low memory footprint (xml parsing, checksum verification, etc. do not require loading the entire xml document as a string)
 * The database layer is buffered which yields a net processing time of about 1 hour (previously without buffering processing time took a whopping 72 hours)
