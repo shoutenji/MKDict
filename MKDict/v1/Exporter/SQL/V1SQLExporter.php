@@ -18,6 +18,9 @@ use MKDict\v1\Database\JMDictSenseElement;
 class V1SQLExporter extends SQLExporter
 {
     const TABLE_NAME = "mk_binary_search";
+    const KANJI_KEY = 1;
+    const READING_KEY = 2;
+    const SENSE_KEY = 3;
     
     /**
      * Factory method for creating a reading element.
@@ -82,18 +85,20 @@ class V1SQLExporter extends SQLExporter
     
     protected function output_footer()
     {
-        
+        $this->file->write(";");
     }
     
     protected function output_header()
     {
-        $table_statement = "CREATE TABLE ".$this::TABLE_NAME."(
+        $statement = "CREATE TABLE ".$this::TABLE_NAME."(
             `binary`      TEXT,
             `uid`         INTEGER,
-            `key`         TEXT
+            `key`         INTEGER
         );\n";
         
-        $this->file->write($table_statement);
+        $statement .= "INSERT INTO ".$this::TABLE_NAME." VALUES ";
+        
+        $this->file->write($statement);
     }
     
     /**
@@ -105,26 +110,14 @@ class V1SQLExporter extends SQLExporter
      * 
      * @return string
      */
-    protected function insert_line(string $binary = "", int $uid = 0, string $ekey = "")
+    protected function insert_line(string $binary = "", int $uid = 0, int $ekey = 0)
     {
-        return "INSERT INTO ".$this::TABLE_NAME." VALUES ('$binary', $uid, '$ekey');\n";
+        return "('$binary', $uid, $ekey),\n";
     }
     
     protected function output_entry($entry)
     {
         $insert_statements = array();
-        
-        //@@
-        /*
-        if(empty($entry))
-        {
-            die("entry object empty:\n".print_r($entry,true));
-        }
-        if(get_class($entry) !== "MKDict\\v1\\Database\\JMDictEntry")
-        {
-            die("entry object wrong class type:\n".print_r($entry,true));
-        }
-         */
         
         foreach($entry->readings as $reading)
         {
@@ -132,7 +125,12 @@ class V1SQLExporter extends SQLExporter
             {
                 die("reading object null:\n".print_r($entry,true));
             }
-            $insert_statements[] = $this->insert_line(strtr($reading->binary_nfkd_casefolded ?? $reading->binary_raw, array('\''=>'\'\'')), $reading->reading_uid, 'r');
+            
+            $insert_statements[] = $this->insert_line(
+                        strtr($reading->binary_nfkd_casefolded ? $reading->binary_nfkd_casefolded : $reading->binary_raw, array('\''=>'\'\'')),
+                        $reading->reading_uid,
+                        self::READING_KEY
+            );
         }
         
         foreach($entry->kanjis as $kanji)
@@ -141,7 +139,11 @@ class V1SQLExporter extends SQLExporter
             {
                 die("kanji object null:\n".print_r($entry,true));
             }
-            $insert_statements[] = $this->insert_line(strtr($kanji->binary_nfkd_casefolded ?? $kanji->binary_raw, array('\''=>'\'\'')), $kanji->kanji_uid, 'k');
+            $insert_statements[] = $this->insert_line(
+                    strtr($kanji->binary_nfkd_casefolded ? $kanji->binary_nfkd_casefolded : $kanji->binary_raw, array('\''=>'\'\'')),
+                    $kanji->kanji_uid,
+                    self::KANJI_KEY
+            );
         }
         
         foreach($entry->senses as $sense)
@@ -153,7 +155,7 @@ class V1SQLExporter extends SQLExporter
                 {
                     die("reading object null:\n".print_r($entry,true));
                 }
-                $insert_statements[] = $this->insert_line(strtr($gloss['binary_raw'], array('\''=>'\'\'')), $sense->sense_uid, 's');
+                $insert_statements[] = $this->insert_line(strtr($gloss['binary_raw'], array('\''=>'\'\'')), $sense->sense_uid, self::SENSE_KEY);
             }
         }
         

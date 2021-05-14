@@ -30,7 +30,7 @@ abstract class Exporter
      * 
      * @return JMDictDBInterface
      */
-    protected abstract function get_versioned_db();
+    abstract protected function get_versioned_db();
     
     /**
      * Constructor
@@ -97,7 +97,7 @@ abstract class Exporter
             $entry_uids_flat = Security::flatten_array(array_column($results, "entry_uid"));
 
             //kanjis
-            $kanjis = $this->jmdb->get_kanjis($entry_uids_flat, $this->version_id, \PDO::FETCH_ASSOC | \PDO::FETCH_GROUP, "entry_uid", array("binary_raw", "binary_nfc", "binary_nfd_casefold"));
+            $kanjis = $this->jmdb->get_kanjis($entry_uids_flat, $this->version_id, \PDO::FETCH_ASSOC | \PDO::FETCH_GROUP, "entry_uid", array("binary_raw", "binary_nfkd_casefold"));
 
             if(!empty($kanjis))
             {
@@ -114,7 +114,7 @@ abstract class Exporter
             $kanji_infos = $this->jmdb->get_kanji_infos($kanji_uids_flat);
 
             //readings
-            $readings = $this->jmdb->get_readings($entry_uids_flat, $this->version_id, \PDO::FETCH_ASSOC | \PDO::FETCH_GROUP, "entry_uid", array("binary_raw", "nokanji", "binary_nfc", "binary_nfd_casefold"));
+            $readings = $this->jmdb->get_readings($entry_uids_flat, $this->version_id, \PDO::FETCH_ASSOC | \PDO::FETCH_GROUP, "entry_uid", array("binary_raw", "nokanji", "binary_nfkd_casefold"));
 
             $reading_uids = array();
             foreach($readings as $reading)
@@ -168,6 +168,7 @@ abstract class Exporter
                         $entry_kanji_obj = $this->new_kanji();
                         $entry_kanji_obj->kanji_uid = $entry_kanji['kanji_uid'];
                         $entry_kanji_obj->binary_raw = $entry_kanji['binary_raw'];
+                        $entry_kanji_obj->binary_nfkd_casefolded = $entry_kanji['binary_nfkd_casefold'];
 
                         if(isset($kanji_pris[$entry_kanji_obj->kanji_uid]))
                         {
@@ -193,6 +194,7 @@ abstract class Exporter
                     $entry_reading_obj = $this->new_reading();
                     $entry_reading_obj->reading_uid = $entry_reading['reading_uid'];
                     $entry_reading_obj->binary_raw = $entry_reading['binary_raw'];
+                    $entry_reading_obj->binary_nfkd_casefolded = $entry_reading['binary_nfkd_casefold'];
                     $entry_reading_obj->b_no_kanji = (INT) $entry_reading['nokanji'];
 
                     if(isset($reading_restrs[$entry_reading_obj->reading_uid]))

@@ -1,7 +1,8 @@
 <?php
 
-namespace MKDict\Export\XML;
+namespace MKDict\Exporter\XML;
 
+use MKDict\Exporter\Exporter;
 use MKDict\Database\DBConnection;
 use MKDict\Database\JMDictEntity;
 use MKDict\Security\Security;
@@ -11,7 +12,7 @@ use MKDict\Security\Security;
  * 
  * @author Taylor B <taylorbrontario@riseup.net>
  */
-abstract class XMLExporter
+abstract class XMLExporter extends Exporter
 {
     /**
      * Constructor
@@ -40,13 +41,6 @@ abstract class XMLExporter
      * @param JMDictEntity $entry
      */
     protected abstract function output_entry(JMDictEntity $entry);
-    
-    /**
-     * Get entries
-     * 
-     * @return array
-     */
-    protected abstract function get_entries();
     
     /**
      * Factory method for creating a reading element.

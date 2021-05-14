@@ -32,7 +32,7 @@ class JMDictStringElement extends JMDictElement implements Comparable
     }
     
     /**
-     * Magin toString method
+     * Magic toString method
      * 
      * @return string
      */
