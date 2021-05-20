@@ -8,3 +8,6 @@
 13)importing should always be running in transaction mode. then if php fails, the db can be safely restored
 14)integrate PHPUnit
 15)glosses should undergo text normalization as well since it is included in the dictionary search space
+
+16) get rid of import.sh and export.sh
+17) use standard unicode test file for testing normalization

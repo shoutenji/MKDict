@@ -1,0 +1,7 @@
+{
+    "name": "shoutenji/mkdict",
+    "description": "PHP application that generates the JMDict database used in the Android app Manakyun.",
+    "require": {
+        "php": ">=7.0"
+    }
+}

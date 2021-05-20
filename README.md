@@ -39,3 +39,40 @@ this app does a lot to filter and sanitize the original JMDict file. Namely, wit
 
 I hope to add config options related to how MKDict will react to invalid data from the JMDict file (ie do you want to truncate an excessively long string or safely ignore the element
 containing that long string)
+
+## Installer Options
+(i will remove bash scripts and create one install/import phar file)
+### --create-db
+Create the manakyun database
+### --test-db
+For Development. Creates a temp table, populates it with utf8 data, and queries it. Uses DB library. 
+### --utf-tests
+TODO 
+## --generate-utf-data
+TODO
+
+## Importer Options
+### --local-copy
+Use a local copy of JMDict instead of downloading it. The local file should be placed in MANAKYUN_DIR/var/data and should be a gz file. Must use --gz-file to specify the filename
+### --gz-file
+Specify the local JMDict file to use e.g. --gz-file=20D06965F4FEE90A8_1620819068.gz
+### --parse-dictionary
+TODO
+### --version-dictionary
+TODO
+### --validate-crc32
+TODO
+### --validate-utf8
+TODO
+### --with-rollback
+TODO
+
+## Exporter Options
+### --export-version
+TODO
+### --export-type
+TODO
+
+## General Options
+### --debug-version
+For Development. Turns on error_reporting(E_ALL) and libxml_use_internal_errors(true)
