@@ -258,8 +258,8 @@ class JMDictParser extends DictionaryParser
             case self::ELEMENT_SENSE_GLOSS:
                 $gloss = array();
                 $gloss['binary_raw'] = $this->clean_raw_text($this->character_buffer);
-                $gloss['lang'] = isset($this->attribs['xml:lang']) ?  $this->attribs['xml:lang'] : "";
-                $gloss['gend'] = isset($this->attribs['g_gend']) ? $this->attribs['g_gend'] : "";
+                $gloss['lang'] = isset($this->attribs['xml:lang']) ?  $this->attribs['xml:lang'] : null;
+                $gloss['gend'] = isset($this->attribs['g_gend']) ? $this->attribs['g_gend'] : null;
                 $this->sense->glosses->append($gloss);
                 break;
 
@@ -298,9 +298,9 @@ class JMDictParser extends DictionaryParser
             case self::ELEMENT_SENSE_LSOURCE:
                 $lsource = array();
                 $lsource['binary_raw'] = $this->clean_raw_text($this->character_buffer, true);
-                $lsource['lang'] = isset($this->attribs['xml:lang']) ? $this->attribs['xml:lang'] : "";
-                $lsource['type'] = isset($this->attribs['ls_type']) ? $this->attribs['ls_type'] : "";
-                $lsource['wasei'] = isset($this->attribs['ls_wasei']) ? ( strtoupper(substr($this->attribs['ls_wasei'],0,1)) === "Y" ? "Y" : "" ) : "";
+                $lsource['lang'] = isset($this->attribs['xml:lang']) ? $this->attribs['xml:lang'] : null;
+                $lsource['type'] = isset($this->attribs['ls_type']) ? $this->attribs['ls_type'] : null;
+                $lsource['wasei'] = isset($this->attribs['ls_wasei']) ? ( strtoupper(substr($this->attribs['ls_wasei'],0,1)) === "Y" ? "Y" : null ) : null;
                 $this->sense->lsources->append($lsource);
                 break;
 
